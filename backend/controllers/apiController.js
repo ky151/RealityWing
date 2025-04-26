@@ -103,77 +103,50 @@ const userSignup = async (req, res, next) => {
 };
 //======================= End User Registration ============================== 
 
+//======================= End User Registration ============================== 
+
 //======================= Start User Login ============================== 
 const userLogin = async (req, res, next) => {
-  //////console.log("login body", req.body);
   const con = await connection();
+
   try {
     await con.beginTransaction();
-    const { contact, country_code, type, password ,login_device_key , access_token} = req.body;
-  
-    // Check if the request is for guest login
-    if (type === 'Guest') {
-      // Directly allow guest login without password verification
-      sendTokenUser({ user_id: 'Guest' }, type, 200, res); // Send a minimal token for guest mode
-      return;
+
+    const { email, password } = req.body;
+
+    // 🔍 Check for missing parameters
+    if (!email || !password) {
+      return res.status(200).json({ result: "Incomplete Parameters" });
     }
-  
-    // Regular user login logic
-    if (!country_code || !contact || !password || !type || !login_device_key || !access_token) {
-      res.status(200).json({ result: "Incomplete Parameters" });
-      return;
+
+    // 🔍 Fetch user by email
+    const [[user]] = await con.query('SELECT * FROM tbl_users WHERE email = ?', [email]);
+
+    if (!user) {
+      return res.status(400).json({ result: "Invalid Credentials" });
     }
-  
-    const [resultss] = await con.query('SELECT * FROM tbl_user WHERE contact = ? AND country_code = ?', [contact, country_code]);
-  
-    console.log("results--> ", resultss);
-  
-    if (resultss.length === 0) {
-      res.status(400).json({ result: "Invalid Credentials" });
-      return;
+
+    // 🔍 Check if account is deleted
+    if (user.deleted === 'Yes') {
+      return res.status(200).json({ result: "Account does not exist!", UserId: user.user_id });
     }
-  
-    var results;
-    [[results]] = await con.query('SELECT * FROM tbl_user WHERE contact = ? AND country_code = ?', [contact, country_code]);
-  
-    console.log("results--> ", results);
-    const user = results;  // Here, the user or owner can be set
-    console.log("user--> ", user);
-    const user_type = user.user_type;
-  
-    const deleted = user.deleted;
-    console.log("deleted--> ", user.deleted);
-    if (deleted == 'Yes') {
-      res.status(200).json({ result: "Account does not exist!" , UserId:user.user_id });
-      return;
-    }
-  
-    if(user_type != type)
-    {
-      res.status(400).json({ result: "Invalid Credentials"});
-      return;
-    }
-  console.log("user.status-->",user.status)
-  console.log("user.password-->",user.password)
-    let isValid = comparePassword(password, user.password);
-    console.log("isValid--> ", isValid);
-  
+
+    // 🔍 Compare hashed password
+    const isValid = comparePassword(password, user.password);
     if (!isValid) {
-      res.status(200).json({ result: "Incorrect Password" });
-      return;
+      return res.status(200).json({ result: "Incorrect Password" });
     }
-  
-    if (user.status === "Approve") {
-      const updateData =await con.query("UPDATE tbl_user SET login_device_key=?,access_token=? WHERE contact = ? AND country_code = ? AND user_type = ? AND deleted= ?", [login_device_key,access_token,contact, country_code, type, 'No']);
-          
-      sendTokenUser(user , type, 200, res);
-      await con.commit();
-    } else if (user.status === "Disapprove") {
-      res.status(200).json({ result: "Your Account Has Been Deactivated!" });
-    } 
-    else {
-      res.status(200).json({ result: "Your account is pending approval. Please wait for 24 hours for admin approval. If you do not receive an update within 24 hours, kindly contact support." });
-    }
+
+    // ✅ Login successful
+    await con.commit();
+
+    // Optionally include token creation here via sendTokenUser
+    //sendTokenUser(user, 200, res, { message: "Login Successful", user_id: user.user_id });
+    //sendTokenUser(user, res, 200, { message: "Login Successful", user_id: user.user_id });
+    sendTokenUser(user, "user", 200, res);
+
+    await con.commit();
+
   } catch (error) {
     await con.rollback();
     console.error('Error in Login API:', error);
@@ -181,7 +154,8 @@ const userLogin = async (req, res, next) => {
   } finally {
     con.release();
   }
-  };
+};
+//======================= End User Login ============================== 
   
 const ownerSignup =  async(req,res,next) => {
   const con = await connection();
