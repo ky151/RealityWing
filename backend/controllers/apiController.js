@@ -103,8 +103,6 @@ const userSignup = async (req, res, next) => {
 };
 //======================= End User Registration ============================== 
 
-//======================= End User Registration ============================== 
-
 //======================= Start User Login ============================== 
 const userLogin = async (req, res, next) => {
   const con = await connection();

@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.route('/userSignup').post(docUploads.array('document_images'), userSignup)
 router.route('/login').post(rateLimiter,upload.none(),userLogin)
+
 router.route('/forgotPassword').post(upload.none(),forgotPassword)
 router.route('/sendOTP').post(upload.none(),sendOTP)
 router.route('/verifyOTP').post(upload.none(),verifyOTP)
