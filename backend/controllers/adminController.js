@@ -1,5 +1,5 @@
 import connection from "../config.js";
-import * as path from 'path';
+import * as path from 'path';     
 import * as url from 'url';
 import ejs from "ejs";
 import {sendTokenAdmin} from "../utils/jwtToken.js";
@@ -14,6 +14,43 @@ const __dirname = url.fileURLToPath(new URL('.',import.meta.url));
 
 //=========================== Start Web  Services =============================
 
+
+const loginAdmin = async (req, res, next) => { 
+  try {
+    // console.log(req.body);
+    const con = await connection();
+    const { username, password } = req.body;
+    console.log("req.body--->",req.body);
+    // If the user doesn't enter username or password
+    if (!username || !password) {
+      //return res.render('admin/login', { 'output': 'Please Enter Username and Password' });
+    }
+  
+    const [results] = await con.query('SELECT * FROM tbl_admin WHERE username = ?', [username]);
+    const admin = results[0];
+
+    // If admin not found
+    if (!admin) {
+      //return res.render('admin/login', { 'output': 'Invalid Username' });
+    }
+
+    // Compare password
+    const isValid = comparePassword(password, admin.password);
+    // console.log("isValid--> ", isValid);
+
+    if (!isValid) {
+      //return res.render('admin/login', { 'output': 'Incorrect Password' });
+    }
+
+    // If login successful
+    sendTokenAdmin(admin, 200, res);
+
+  } catch (error) {
+    console.error('Error during login:', error);
+    // Handle errors like database connection failure, unexpected errors, etc.
+    res.render('admin/login', { 'output': 'An error occurred. Please try again later.' });
+  }
+};
 
 
 const home = async (req, res, next) => {
@@ -142,42 +179,7 @@ const index = async (req, res, next) => {
   };
 
 
-  const loginAdmin = async (req, res, next) => { 
-    try {
-      // console.log(req.body);
-      const con = await connection();
-      const { username, password } = req.body;
-      console.log("req.body--->",req.body);
-      // If the user doesn't enter username or password
-      if (!username || !password) {
-        return res.render('superadmin/login', { 'output': 'Please Enter Username and Password' });
-      }
-    
-      const [results] = await con.query('SELECT * FROM tbl_admin WHERE username = ?', [username]);
-      const admin = results[0];
-  
-      // If admin not found
-      if (!admin) {
-        return res.render('superadmin/login', { 'output': 'Invalid Username' });
-      }
-  
-      // Compare password
-      const isValid = comparePassword(password, admin.password);
-      // console.log("isValid--> ", isValid);
-  
-      if (!isValid) {
-        return res.render('superadmin/login', { 'output': 'Incorrect Password' });
-      }
-  
-      // If login successful
-      sendTokenAdmin(admin, 200, res);
-  
-    } catch (error) {
-      console.error('Error during login:', error);
-      // Handle errors like database connection failure, unexpected errors, etc.
-      res.render('superadmin/login', { 'output': 'An error occurred. Please try again later.' });
-    }
-  };
+
 
 
   const logout1 = async (req, res) => {

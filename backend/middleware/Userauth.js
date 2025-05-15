@@ -4,14 +4,14 @@ import connection from '../config.js';
 const isAuthenticatedUser = async (req, res, next) => {
    // Print the entire req.body to debug
   
-  const { user_type } = req.body; // Assuming 'type' is sent in the request body
+  //const { user_type } = req.body; // Assuming 'type' is sent in the request body
 
 
   // If 'type' is present and is 'Guest', skip token verification
-  if (user_type === 'Guest') {
-    //console.log("gurest mode")
-    return next();
-  }
+  // if (user_type === 'Guest') {
+  //   //console.log("gurest mode")
+  //   return next();
+  // }
 
   // If 'type' is not present or any other type, proceed with token verification
   if (req.header('Authorization')) {
@@ -27,7 +27,7 @@ const isAuthenticatedUser = async (req, res, next) => {
 
   try {
     const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-    const [result] = await con.query('SELECT * FROM tbl_user WHERE user_id = ?', [decodedData.id]);
+    const [result] = await con.query('SELECT * FROM tbl_users WHERE user_id = ?', [decodedData.id]);
     //console.log(result[0]);
     req.user = result[0];
 

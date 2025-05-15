@@ -7,7 +7,7 @@ dotenv.config({path:"./config.env"});
 const con = await connection();
 
 const sendTokenAdmin = (admin, statusCode, res)=>{
-    const token =  getJWTToken(admin.admin_id ); 
+    const token =  getJWTToken(admin.id ); 
     //options for tokens  
         const options = {
             expires: new Date(
@@ -15,7 +15,7 @@ const sendTokenAdmin = (admin, statusCode, res)=>{
             ), 
             httpOnly:true
         }      
-    res.status(statusCode).cookie('Admin_token',token,options).redirect('/superadmin')      
+    res.status(statusCode).cookie('Admin_token',token,options).redirect('/admin')      
 }
 
 
@@ -28,7 +28,7 @@ const sendTokenSubAdmin = (subadmin , statusCode , res)=>{
         ), 
         httpOnly:true
     }
-    res.status(statusCode).cookie('SubAdmin_Token',token,options).redirect('/subadmin')
+    res.status(statusCode).cookie('SubAdmin_Token',token,options).redirect('/admin')
 }
 
 

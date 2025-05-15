@@ -52,11 +52,11 @@ const userSignup = async (req, res, next) => {
       if (userResult[0].count > 0) {
           await con.rollback();
          // return res.status(404).json({ result: 'Email already exists' });
-          return res.status(404).json({ result: "Email already exists" });
+          return res.status(200).json({ result: "Email already exists" });
       } else if (userResult2[0].count > 0) {
           await con.rollback();
          // return res.status(404).json({ result: 'Mobile Number already exists' });
-          return res.status(404).json({ result: "Mobile Number already exists" });
+          return res.status(200).json({ result: "Mobile Number already exists" });
       } else {
           const sql = 
               'INSERT INTO `tbl_users` (`name`, `email`, `password`, `country_code`,  `phone_number`, `profile_image_type`, `device_key`, `auth_token`, `account_status`, `role`, `registration_date`, `registration_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
@@ -155,6 +155,82 @@ const userLogin = async (req, res, next) => {
 };
 //======================= End User Login ============================== 
   
+//======================= Start User Logout ============================== 
+const Logout = async (req, res, next) => {
+  // console.log("logout body", req.body);
+  const con = await connection();
+  const userID = req.user.user_id;  // Assuming userID is stored in req.user
+  
+  // console.log("user_id--- ", userID);
+  
+  try {
+    await con.beginTransaction();
+
+    // Update query to clear device key and access token
+    const updateData = await con.query("UPDATE tbl_users SET device_key='', auth_token='' WHERE user_id = ?", [userID]);
+
+    // Set token cookie to null for logging out
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true
+    });
+
+    await con.commit();  // Commit the transaction after successful query execution
+    res.status(200).json({ result: "logout success" });
+  } catch (error) {
+    await con.rollback();
+    console.error('Error in Logout API:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+
+//======================= End User Logout ============================== 
+
+//======================= Start Fetch Category ============================== 
+const getCategoryList = async (req, res) => {
+  const con = await connection();  // Assume connection() establishes DB connection
+  
+  // Define the base URL for images
+  const profileBaseUrl = `http://${process.env.Host}/upload/category/`;
+  
+  try {
+    // Fetch categories from the database
+    const [categories] = await con.query(`
+      SELECT 
+        id, 
+        category_name, 
+        slug, 
+        description, 
+        category_image, 
+        status, 
+        created_at, 
+        updated_at 
+      FROM tbl_categories WHERE 1
+    `);
+
+    // If categories are found
+    if (categories.length > 0) {
+      // Add the base URL to each category's image
+      const categoriesWithImagePath = categories.map(category => ({
+        ...category,
+        category_image: category.category_image ? profileBaseUrl + category.category_image : null  // Add image path if image exists
+      }));
+
+      res.status(200).json({ success: true, data: categoriesWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No categories found." });
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End Fetch Category ============================== 
+
 const ownerSignup =  async(req,res,next) => {
   const con = await connection();
   try {
@@ -420,34 +496,7 @@ try {
 
 
 
-const Logout = async (req, res, next) => {
-  ////console.log("logout body", req.body);
-  const con = await connection();
-  const userID = req.user.user_id;
-  ////console.log("user_id--- ", userID);
-  
-  try {
-    await con.beginTransaction();
 
-    // Update query to clear device key and access token
-    const updateData = await con.query("UPDATE tbl_user SET login_device_key='', access_token='' WHERE user_id = ?", [userID]);
-
-    // Set token cookie to null for logging out
-    res.cookie("token", null, {
-      expires: new Date(Date.now()),
-      httpOnly: true
-    });
-
-    await con.commit();  // Commit the transaction after successful query execution
-    res.status(200).json({ result: "logout success" });
-  } catch (error) {
-    await con.rollback();
-    console.error('Error in Logout API:', error);
-    res.status(500).json({ result: 'Internal Server Error' });
-  } finally {
-    con.release();
-  }
-};
 
 //---------------------- Login /Logout API end -------------------------------
 
@@ -480,16 +529,16 @@ const cancellationPolicy = async (req, res, next) => {
 
 const tandc = async (req, res, next) => {
   const con = await connection();
-  const type = req.query.user_type;
+  //const type = req.query.user_type;
   ////console.log(type);
   try {  
-    const [result] = await con.query('SELECT * FROM tbl_tandc where tandc_type = ?', [type]);
+    const [result] = await con.query('SELECT * FROM tbl_tandc');
     if (result.length > 0) {
       const termsContent = result[0].terms;
 
 
         // Wrap the terms content in a container with 250% zoom level
-        const zoomedContent = `<div style="zoom: 350%;">${termsContent}</div>`;
+        const zoomedContent = `${termsContent}`;
       
         // Return the HTML content with zoom applied as a response
         res.send(zoomedContent);
@@ -511,16 +560,16 @@ const tandc = async (req, res, next) => {
 
 const pandp = async (req, res, next) => {
   const con = await connection();
-  const type = req.query.user_type;
+  //const type = req.query.user_type;
   try {
     // Fetch the terms and conditions from the database
-    const [result] = await con.query('SELECT * FROM tbl_pandp where policy_type = ?', [type]);
+    const [result] = await con.query('SELECT * FROM tbl_pandp');
 
     if (result.length > 0) {
       const policyContent = result[0].policy;
 
 
-      const zoomedContent = `<div style="zoom: 350%;">${policyContent}</div>`;
+      const zoomedContent = `${policyContent}`;
       
       // Return the HTML content with zoom applied as a response
       res.send(zoomedContent);
@@ -9571,7 +9620,7 @@ const fetchBookingIdList = async (req,res,next) => {
 }
 
 export { sendOTP, verifyOTP, userSignup, ownerSignup, forgotPassword, resetpassword,guestLogin, userLogin, profile, updateprofile, changePassword, Logout,
-  deleteAccount, tandc, pandp, faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 
+  deleteAccount, tandc, pandp, getCategoryList, faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 
   updateBankDetails , fetchWalletDetails , fetchCurrency , currencyRate , importantData , withdrawRequest , depositAmount,withdrawHistory, 
   dipositeHistory , transactionHistory , addRating ,fetchRating , contactSupportRequest, fetchSupportComplainList,fetchSingleComplain,
   replyComplainTicket , closeComplainTicket , updateProfilePic , switchUserOwner , fetchMakeList , fetchModelList , fetchFeatureList,

@@ -5,7 +5,7 @@ const isAuthenticatedAdmin = async (req, res, next) => {
     const { Admin_token } = req.cookies;
 
     if (!Admin_token) {
-        return res.redirect('/superadmin/login');
+        //return res.redirect('/admin/login');
     }
 
     try {
@@ -17,18 +17,16 @@ const isAuthenticatedAdmin = async (req, res, next) => {
             res.app.locals.loggeduser = req.admin;
             res.app.locals.permissions = req.admin.permissions;  
 
-            
-
-            if(req.admin.admin_type=='superadmin'){
-                res.app.locals.dashboard_type = 'superadmin';
+            if(req.admin.admin_type=='admin'){
+                res.app.locals.dashboard_type = 'admin';
             }else{
-                res.app.locals.dashboard_type = 'subadmin';
+                res.app.locals.dashboard_type = 'admin';
             }
 
             
             next();
     } catch (error) {
-        return res.redirect('/superadmin/login');
+        //return res.redirect('/admin/login');
     }
 };
 

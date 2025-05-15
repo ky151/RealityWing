@@ -36,28 +36,6 @@ app.use(requestIp.mw());
 app.use(express.static(path.join(__dirname, 'public/flutter')));
 
 
- // ================== CSRF Start Middleware ----------
-
-// Define CSRF middleware with cookie
-const csrfMiddleware = csurf({ cookie: true });
-
-// Skip CSRF for specific routes by using a condition
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    return next(); // Skip CSRF for /api and / routes
-  }
-  csrfMiddleware(req, res, next); // Apply CSRF protection for other routes
-});
-
-// Set csrfToken for the rest of the routes (only where CSRF protection is applied)
-app.use((req, res, next) => {
-  if (!(req.path.startsWith('/api'))) {
-    res.locals.csrfToken = req.csrfToken(); // Set csrfToken for non-skipped routes
-  }
-  next();
-});
-
-//================== CSRF End ======================
 
 app.use('/admin',AdminRouter);
 app.use('/api',ApiRouter);
@@ -71,6 +49,7 @@ app.set("views",[
 app.get('/api', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
+
 
 //==================================================
 
