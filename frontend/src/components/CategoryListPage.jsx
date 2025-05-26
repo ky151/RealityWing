@@ -9,33 +9,34 @@ import icon1 from "../assets/asset1.jpg";
 
 // Sample data (this would come from an API or database in a real app)
 const sampleData = {
-    villas: [
+    'Luxury Home': [
       { id: 1, name: 'Luxury Villa in Beachside', image: icon2, area: 3000, location: 'Vijay Nagar' },
       { id: 2, name: 'Modern Villa in the City', image: icon5, area: 2500, location: 'Rao' },
       { id: 3, name: 'Cozy Villa in Countryside', image: icon4, area: 1500, location: 'Vijay Nagar' },
       { id: 4, name: 'Spacious Villa in Suburb', image: icon3, area: 2000, location: 'Bicholi Mardana' },
       { id: 5, name: 'Elegant Villa in Downtown', image: icon6, area: 2800, location: 'Rao' }
     ],
-    apartments: [
+    'fishing-gear': [
       { id: 1, name: 'Cozy 2BHK Apartment', image: icon6, area: 1200, location: 'Vijay Nagar' },
       { id: 2, name: 'Spacious 3BHK Apartment', image: icon2, area: 1500, location: 'Rao' },
       { id: 3, name: 'Luxury 4BHK Apartment', image: icon5, area: 1800, location: 'Bicholi Mardana' },
       { id: 4, name: 'Affordable 1BHK Apartment', image: icon3, area: 900, location: 'Vijay Nagar' },
       { id: 5, name: 'Penthouse Apartment in the City', image: icon4, area: 3500, location: 'City Center' }
     ],
-    studios: [
-      { id: 1, name: 'Compact Studio in Downtown', image: icon3, area: 500, location: 'Downtown' },
-      { id: 2, name: 'Affordable Studio in the Suburbs', image: icon4, area: 600, location: 'Suburbs' },
-      { id: 3, name: 'Luxury Studio by the Beach', image: icon5, area: 700, location: 'Beachside' },
-      { id: 4, name: 'Cozy Studio in City Center', image: icon2, area: 550, location: 'City Center' },
-      { id: 5, name: 'Modern Studio in Tech Park', image: icon1, area: 600, location: 'Tech Park' }
+    'Vijay Nagar': [
+      { id: 1, name: 'Compact Studio in Downtown Vijay Nagar' , image: icon3, area: 500, location: 'Vijay Nagar' },
+      { id: 2, name: 'Affordable Studio in the Suburbs Vijay Nagar', image: icon4, area: 600, location: 'Vijay Nagar' },
+      { id: 3, name: 'Luxury Studio by the Beach Vijay Nagar', image: icon5, area: 700, location: 'Vijay Nagar' },
+      { id: 4, name: 'Cozy Studio in City Center Vijay Nagar', image: icon2, area: 550, location: 'Vijay Nagar' },
+      { id: 5, name: 'Modern Studio in Tech Park Vijay Nagar', image: icon1, area: 600, location: 'Vijay Nagar' }
     ],
-    'shared-rooms': [
+    'All-Property': [
       { id: 1, name: 'Shared Room in Vijay Nagar', image: icon1, area: 250, location: 'Vijay Nagar' },
       { id: 2, name: 'Affordable Shared Room in Rao', image: icon3, area: 300, location: 'Rao' },
       { id: 3, name: 'Spacious Shared Room in Suburbs', image: icon4, area: 350, location: 'Suburbs' },
       { id: 4, name: 'Shared Room in City Center', image: icon5, area: 280, location: 'City Center' },
-      { id: 5, name: 'Comfortable Shared Room near College', image: icon2, area: 300, location: 'College Road' }
+      { id: 5, name: 'Comfortable Shared Room near College', image: icon2, area: 300, location: 'College Road' },
+      
     ],
     'pg-paying-guest': [
       { id: 1, name: 'PG for Boys in Vijay Nagar', image: icon2, area: 350, location: 'Vijay Nagar' },
@@ -126,7 +127,6 @@ const sampleData = {
 function CategoryListPage() {
   const { name } = useParams(); // The category name (like 'villa', 'apartment')
   const items = sampleData[name] || [];
-
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
 

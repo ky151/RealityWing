@@ -1,8 +1,27 @@
 // store.js
+import { configureStore } from '@reduxjs/toolkit';
+import storage from 'redux-persist/lib/storage';
+import { persistReducer, persistStore } from 'redux-persist';
+import { combineReducers } from 'redux';
+import authReducer from './reducers/authReducer';
+import categoryReducer from './reducers/categoryReducer';
+import propertyReducer from './Slice/propertySlice';
 
-import { createStore } from 'redux';
-import rootReducer from './reducers';
+const persistConfig = {
+  key: 'root',
+  storage,
+};
 
-const store = createStore(rootReducer);
+const rootReducer = combineReducers({
+  auth: authReducer,
+  category: categoryReducer, 
+  property: propertyReducer,
+});
 
-export default store;
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+export const store = configureStore({
+  reducer: persistedReducer,
+});
+
+export const persistor = persistStore(store);

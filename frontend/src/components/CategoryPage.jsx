@@ -1,24 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { FaRupeeSign } from 'react-icons/fa';
-import { MdOutlineLocationOn, MdOutlineBedroomParent } from 'react-icons/md';
-import { PiArmchairLight } from 'react-icons/pi';
 import { FaCalendarAlt } from 'react-icons/fa';
 import icon2 from "../assets/asset1.jpg";
 import icon3 from "../assets/asset3.jpg";
 import icon4 from "../assets/asset5.jpg";
 import icon5 from "../assets/asset6.jpg";
-import icon6 from "../assets/asset7.jpg";
 import icon1 from "../assets/asset1.jpg";
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 // Sample data (this would come from an API or database in a real app)
 const sampleData = {
-  villas: [
+  'Luxury Home': [
     {
       id: 1,
       name: 'Luxury Villa in Beachside',
-      image:icon1,
+      image: icon1,
       rent: '15,000/month',
       area: '3000 sq.ft',
       location: 'Beachside',
@@ -31,7 +27,7 @@ const sampleData = {
     {
       id: 2,
       name: 'Modern Villa in the City',
-      image:icon3,
+      image: icon3,
       rent: '12,000/month',
       area: '2500 sq.ft',
       location: 'City Center',
@@ -42,11 +38,11 @@ const sampleData = {
       amenities: ['24/7 Security', 'Parking', 'Air Conditioning', 'Elevator'],
     },
   ],
-  apartments: [
+  'fishing-gear': [
     {
       id: 1,
       name: 'Cozy 2BHK Apartment',
-      image:icon3,
+      image: icon3,
       rent: '8,000/month',
       area: '1200 sq.ft',
       location: 'Downtown',
@@ -59,7 +55,7 @@ const sampleData = {
     {
       id: 2,
       name: 'Spacious 3BHK Apartment',
-      image:icon4,
+      image: icon4,
       rent: '10,000/month',
       area: '1500 sq.ft',
       location: 'Suburbs',
@@ -70,11 +66,11 @@ const sampleData = {
       amenities: ['24/7 Security', 'Parking', 'Gym', 'Children\'s Play Area'],
     },
   ],
-  studios: [
+   'Vijay Nagar': [
     {
       id: 1,
       name: 'Compact Studio in Downtown',
-      image:icon1,
+      image: icon1,
       rent: '6,000/month',
       area: '500 sq.ft',
       location: 'Downtown',
@@ -87,7 +83,7 @@ const sampleData = {
     {
       id: 2,
       name: 'Luxury Studio with City View',
-      image:icon4,
+      image: icon4,
       rent: '9,000/month',
       area: '700 sq.ft',
       location: 'City Center',
@@ -98,11 +94,11 @@ const sampleData = {
       amenities: ['24/7 Security', 'Parking', 'Gym', 'Air Conditioning'],
     },
   ],
-  sharedRooms: [
+  'All-Property': [
     {
       id: 1,
       name: 'Shared Room in City Center',
-      image:icon3,
+      image: icon3,
       rent: '4,000/month',
       area: '300 sq.ft',
       location: 'City Center',
@@ -115,7 +111,7 @@ const sampleData = {
     {
       id: 2,
       name: 'Affordable Shared Room in Suburbs',
-      image:icon2,
+      image: icon2,
       rent: '3,500/month',
       area: '350 sq.ft',
       location: 'Suburbs',
@@ -130,8 +126,8 @@ const sampleData = {
     {
       id: 1,
       name: 'PG in City Center',
-      image:icon4,   
-       rent: '6,500/month',
+      image: icon4,
+      rent: '6,500/month',
       area: '450 sq.ft',
       location: 'City Center',
       description: 'PG accommodation in a prime location, ideal for students or working professionals.',
@@ -143,8 +139,8 @@ const sampleData = {
     {
       id: 2,
       name: 'PG Near University',
-      image:icon5,  
-        rent: '5,500/month',
+      image: icon5,
+      rent: '5,500/month',
       area: '500 sq.ft',
       location: 'Near University',
       description: 'PG room located near the university campus, perfect for students.',
@@ -158,7 +154,7 @@ const sampleData = {
     {
       id: 1,
       name: 'Hostel Near Railway Station',
-      image:icon4,
+      image: icon4,
       rent: '3,000/month',
       area: '250 sq.ft',
       location: 'Near Railway Station',
@@ -171,7 +167,7 @@ const sampleData = {
     {
       id: 2,
       name: 'Hostel for Students in Downtown',
-      image:icon1,
+      image: icon1,
       rent: '3,500/month',
       area: '300 sq.ft',
       location: 'Downtown',
@@ -186,7 +182,7 @@ const sampleData = {
     {
       id: 1,
       name: 'Co-living Space in Downtown',
-      image:icon3,
+      image: icon3,
       rent: '7,500/month',
       area: '700 sq.ft',
       location: 'Downtown',
@@ -199,7 +195,7 @@ const sampleData = {
     {
       id: 2,
       name: 'Co-living Space in Suburbs',
-      image:icon5,
+      image: icon5,
       rent: '6,000/month',
       area: '650 sq.ft',
       location: 'Suburbs',
@@ -214,7 +210,7 @@ const sampleData = {
     {
       id: 1,
       name: 'Luxury Penthouse in City Center',
-      image:icon1,
+      image: icon1,
       rent: '50,000/month',
       area: '5000 sq.ft',
       location: 'City Center',
@@ -227,7 +223,7 @@ const sampleData = {
     {
       id: 2,
       name: 'Grand Mansion in Suburbs',
-      image:icon5,
+      image: icon5,
       rent: '40,000/month',
       area: '7000 sq.ft',
       location: 'Suburbs',
@@ -243,7 +239,15 @@ const sampleData = {
 function CategoryPage() {
   const { name, id } = useParams();
   const item = sampleData[name]?.find((item) => item.id === parseInt(id));
+  const [showPopup, setShowPopup] = useState(false);
 
+  const handleRequestClick = () => setShowPopup(true);
+  const handleClosePopup = () => setShowPopup(false);
+  const handleConfirmRequest = () => {
+    // Handle actual request logic here
+    console.log('Property request sent!');
+    setShowPopup(false);
+  };
   if (!item) {
     return <div>Item not found</div>;
   }
@@ -257,8 +261,8 @@ function CategoryPage() {
             <Carousel showThumbs={false} infiniteLoop autoPlay>
               {/* {item.images?.map((src, idx) => (
                 <div key={idx}> */}
-                  <img src={item.image} alt={`Property`} className="h-96 object-cover w-full" />
-                {/* </div>
+              <img src={item.image} alt={`Property`} className="h-96 object-cover w-full" />
+              {/* </div>
               ))} */}
             </Carousel>
           </div>
@@ -286,6 +290,40 @@ function CategoryPage() {
             </div>
 
             <div className="text-gray-500 text-xs mt-4">Posted by Owner</div>
+            <button
+              onClick={handleRequestClick}
+              className="mt-4 bg-[#D32F2F] text-white text-sm px-4 py-2 rounded hover:bg-[#E57373] transition"
+            >
+              Request For Property
+            </button>
+           {showPopup && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8 mx-4 text-center">
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        Do you want to request this property?
+      </h2>
+      <p className="text-base text-gray-600 mb-2">
+        If you proceed, we’ll notify the property owner that you're interested in renting this listing.Your information and interest will be shared securely with the owner.
+      </p>
+      <div className="mt-8 flex justify-center gap-6">
+        <button
+          onClick={handleConfirmRequest}
+          className="px-6 py-3 bg-[#D32F2F] text-white text-sm rounded-lg hover:bg-[#E57373] transition-colors"
+        >
+          Yes, Request
+        </button>
+        <button
+          onClick={handleClosePopup}
+          className="px-6 py-3 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
           </div>
         </div>
 

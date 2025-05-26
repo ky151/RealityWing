@@ -11,10 +11,17 @@ import CategoryPage from './components/CategoryPage';
 import ScrollToTop from './components/ScrollToTop';
 import Blog from './pages/Blog';
 import CategoryListPage from './components/CategoryListPage';
-
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import PropertyListPage from './pages/property';
+import AddPropertyForm from './components/propertyDetails/addPropertyForm';
+import PropertyViewPage from './components/propertyDetails/PropertyViewPage';
 function App() {
   return (
     <BrowserRouter>
+      <ToastContainer />
       <div className="App">
         <Header />
         <div className="pt-[80px]">
@@ -26,10 +33,17 @@ function App() {
             <Route path="/sign-up" element={<><ScrollToTop /><SignUpPage /></>} />
             <Route path="/login" element={<><ScrollToTop /><LoginPage /></>} />
             {/* Show all categories */}
-            <Route path="/category/:name" element={<CategoryListPage />} />
-
+            <Route path="/category/:name" element={<><ScrollToTop /><CategoryListPage /></>} />
+            <Route path="/properties-list" element={<><ScrollToTop /><PropertyListPage /></>} />
+            <Route path="/add-property" element={<><ScrollToTop /><AddPropertyForm /></>} />
+            <Route path="/property/:id" element={<><ScrollToTop /><PropertyViewPage /></>} />
+            <Route path="/edit-property/:id" element={<><ScrollToTop /><AddPropertyForm /></>} />
             {/* Show details for an individual item */}
-            <Route path="/category/:name/:id" element={<CategoryPage />} />          </Routes>
+            <Route path="/category/:name/:id" element={<><ScrollToTop /><CategoryPage /></>} />
+            <Route path="/privacy-policy" element={<><ScrollToTop /><PrivacyPolicy /></>} />
+            <Route path="/terms-and-conditions" element={<><ScrollToTop /><TermsAndConditions /></>} />
+          </Routes>
+
         </div>
       </div>
     </BrowserRouter>

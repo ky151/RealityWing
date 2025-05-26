@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { userLogin } from '../Api/services/authService';
+import { setUser } from '../redux/actions/authActions';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -9,19 +12,24 @@ function LoginPage() {
 
   const {auth ,user} = useSelector(state =>
    state
-  );  // <-- Correct here
-
+  ); 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const handleLogin = async () => {
     const formData = new FormData();
     formData.append('email', email);
     formData.append('password', password);
-    console.log(auth, "JWT");
 
     try {
       const response = await userLogin(formData, auth.token);  
       console.log('Login success:', response);
-      // You can save the token to Redux or localStorage
-      // Redirect to the home page after successful login
+    toast.success('Login Successfully!');
+      if (response && response.JWT) {
+        console.log(response ,"response")
+        const { JWT, user_id } = response;
+      dispatch(setUser({ JWT, user: { id: user_id } }));
+      navigate('/home');
+      }
     } catch (err) {
       setError('Invalid email or password');
       console.error('Login error:', err);
