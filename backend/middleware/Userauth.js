@@ -13,6 +13,7 @@ const isAuthenticatedUser = async (req, res, next) => {
   //   return next();
   // }
 
+  
   // If 'type' is not present or any other type, proceed with token verification
   if (req.header('Authorization')) {
     var token = req.header('Authorization').replace('Bearer ', '');

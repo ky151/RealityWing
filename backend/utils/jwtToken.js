@@ -6,18 +6,20 @@ dotenv.config({path:"./config.env"});
 
 const con = await connection();
 
-const sendTokenAdmin = (admin, statusCode, res)=>{
-    const token =  getJWTToken(admin.id ); 
+// Creating Token and saving in Cookie for user 
+const sendTokenAdmin = (admin, type, statusCode, res)=>{ 
+    const token =  getJWTToken(admin.id); 
     //options for tokens  
         const options = {
             expires: new Date(
                 Date.now() + process.env.COOKIE_EXPIRE*24*60*60*1000
             ), 
             httpOnly:true
-        }      
-    res.status(statusCode).cookie('Admin_token',token,options).redirect('/admin')      
+        }                 
+        //res.redirect('/user/home/')
+        console.log("login success", admin.id)
+       res.status(statusCode).cookie('Admin_token',token,options).json({ result: "success","JWT":token,type:type});       
 }
-
 
 // JWT Token for Sub Admin 
 const sendTokenSubAdmin = (subadmin , statusCode , res)=>{

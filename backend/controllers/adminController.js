@@ -14,44 +14,88 @@ const __dirname = url.fileURLToPath(new URL('.',import.meta.url));
 
 //=========================== Start Web  Services =============================
 
+//======================= Start Admin Login ============================== 
+const loginAdmin = async (req, res, next) => {
+  const con = await connection();
 
-const loginAdmin = async (req, res, next) => { 
   try {
-    // console.log(req.body);
-    const con = await connection();
-    const { username, password } = req.body;
-    console.log("req.body--->",req.body);
-    // If the user doesn't enter username or password
-    if (!username || !password) {
-      //return res.render('admin/login', { 'output': 'Please Enter Username and Password' });
-    }
-  
-    const [results] = await con.query('SELECT * FROM tbl_admin WHERE username = ?', [username]);
-    const admin = results[0];
+    await con.beginTransaction();
 
-    // If admin not found
+    const { email, password } = req.body;
+
+    // 🔍 Check for missing parameters
+    if (!email || !password) {
+      return res.status(200).json({ result: "Incomplete Parameters" });
+    }
+
+    // 🔍 Fetch admin by email
+    const [[admin]] = await con.query(
+      'SELECT `id`, `name`, `email`, `password`, `profile_image`, `role`, `status`, `created_at`, `updated_at` FROM tbl_admin WHERE email = ?',
+      [email]
+    );
+
     if (!admin) {
-      //return res.render('admin/login', { 'output': 'Invalid Username' });
+      return res.status(400).json({ result: "Invalid Credentials" });
     }
 
-    // Compare password
+    // 🔒 Optional: Check if account is deactivated (status = inactive/0)
+    if (admin.status == '0') {
+      return res.status(403).json({ result: "Account is inactive or blocked." });
+    }
+
+    // 🔐 Compare password
     const isValid = comparePassword(password, admin.password);
-    // console.log("isValid--> ", isValid);
-
     if (!isValid) {
-      //return res.render('admin/login', { 'output': 'Incorrect Password' });
+      return res.status(200).json({ result: "Incorrect Password" });
     }
 
-    // If login successful
-    sendTokenAdmin(admin, 200, res);
+    // ✅ Successful login
+    await con.commit();
+
+    // 🔑 Issue token (assuming sendTokenUser supports role-based or admin handling)
+    sendTokenAdmin(admin, "admin", 200, res); // assuming "admin" is passed as role/context
 
   } catch (error) {
-    console.error('Error during login:', error);
-    // Handle errors like database connection failure, unexpected errors, etc.
-    res.render('admin/login', { 'output': 'An error occurred. Please try again later.' });
+    await con.rollback();
+    console.error('Error in Admin Login API:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
   }
 };
+//======================= End Admin Login ============================== 
 
+//======================= Start User Logout ============================== 
+const logout = async (req, res, next) => {
+  const con = await connection();
+
+  // Get admin ID from req.user (as set by JWT middleware)
+  const adminID = req.admin.admin_id;
+
+  try {
+    await con.beginTransaction();
+
+    // Optional: Clear session fields
+    await con.query("UPDATE tbl_admin SET auth_token='' WHERE id = ?", [adminID]);
+
+    // Clear cookie
+    res.cookie("Admin_token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    await con.commit();
+    res.status(200).json({ result: "Admin logout success" });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error in Admin Logout API:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End User Logout ============================== 
 
 const home = async (req, res, next) => {
   const con = await connection();
@@ -177,53 +221,6 @@ const index = async (req, res, next) => {
         con.release();
     }
   };
-
-
-
-
-
-  const logout1 = async (req, res) => {
-    const con = await connection();
-    try {
-        //const admin = req.admin; // Assuming you have middleware to verify and fetch admin info from JWT
-  
-        // Clear all active sessions for this admin
-        await con.query('DELETE FROM active_sessions WHERE user_id = ?', [1]);
-  
-        // Clear the Admin_token cookie from the response
-        res.clearCookie('Admin_token').redirect('/superadmin/login'); // Redirect to login page after logout
-    } catch (error) {
-        console.error('Error logging out admin:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-  };
-
-  const logout = async (req, res) => {
-
-          try {
-            res.cookie("Admin_token",null,{
-              expires : new Date(Date.now()),
-              httpOnly:true
-          })
-          
-          res.redirect('/superadmin/login')
-    } catch (error) {
-        console.error('Error logging out admin:', error);
-        // res.cookie('rental_msg', 'Error logging out admin: : '+ error);
-       res.render('superadmin/kil500', { output: `${error}` });
-        // res.render('kil404', { output: `Requested Page or URL Not Found` });
-
-        // res.redirect('/superadmin')
-    }
-  };
-
-
-
-
-
-
-
-
 
   
     //----------------------- Profile Forgot Password Section Start ------------------------------------- 

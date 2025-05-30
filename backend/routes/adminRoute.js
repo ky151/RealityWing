@@ -159,13 +159,13 @@ router.route('/fetchRideChartData').get(isAuthenticatedAdmin, fetchRideChartData
 
 //------------------- Admin Start -------------------------------
 
-router.route('/login').get(login);
+//router.route('/login').get(login);
 
-router.route('/login').post(loginAdmin)
+router.route('/login').post(profileUpload.none(),loginAdmin)
 
-router.route('/logout').get(logout)
+router.route('/logout').post(profileUpload.none(),logout)
 
-
+router.route('/logout').post(profileUpload.none(),logout)
 
 
 //------------------------- Forgot Reset Password ----------------

@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, 'public/flutter')));
 
 
 
-app.use('/admin',AdminRouter);
+app.use('/api_admin',AdminRouter);
 app.use('/api',ApiRouter);
 app.use('/',IndexRouter);
 
@@ -49,6 +49,12 @@ app.set("views",[
 app.get('/api', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
+
+
+app.get('/api_admin', (req, res) => {
+  res.json({ message: 'Hello, World!' });
+});
+
 
 
 //==================================================

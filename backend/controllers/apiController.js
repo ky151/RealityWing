@@ -193,7 +193,7 @@ const getCategoryList = async (req, res) => {
   const con = await connection();  // Assume connection() establishes DB connection
   
   // Define the base URL for images
-  const profileBaseUrl = `http://${process.env.Host}/upload/category/`;
+  const profileBaseUrl = `https://${process.env.Host}/upload/category/`;
   
   try {
     // Fetch categories from the database
@@ -229,6 +229,48 @@ const getCategoryList = async (req, res) => {
     con.release();
   }
 };
+//======================= End Fetch Category ============================== 
+
+//======================= Start Fetch Category ============================== 
+const getAreaList = async (req, res) => {
+  const con = await connection();  // Assume connection() establishes DB connection
+
+  // Define the base URL for images
+  const areaImageBaseUrl = `https://${process.env.Host}/upload/area/`;
+
+  try {
+    // Fetch areas from the database
+    const [areas] = await con.query(`
+      SELECT 
+        id, 
+        name, 
+        description, 
+        image, 
+        lat, 
+        log, 
+        create_date 
+      FROM tbl_area WHERE 1
+    `);
+
+    if (areas.length > 0) {
+      // Add the base URL to each area's image
+      const areasWithImagePath = areas.map(area => ({
+        ...area,
+        image: area.image ? areaImageBaseUrl + area.image : null  // Add full image URL
+      }));
+
+      res.status(200).json({ success: true, data: areasWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No areas found." });
+    }
+  } catch (error) {
+    console.error("Error fetching areas:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+
 //======================= End Fetch Category ============================== 
 
 const ownerSignup =  async(req,res,next) => {
@@ -9620,7 +9662,7 @@ const fetchBookingIdList = async (req,res,next) => {
 }
 
 export { sendOTP, verifyOTP, userSignup, ownerSignup, forgotPassword, resetpassword,guestLogin, userLogin, profile, updateprofile, changePassword, Logout,
-  deleteAccount, tandc, pandp, getCategoryList, faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 
+  deleteAccount, tandc, pandp, getCategoryList, getAreaList, faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 
   updateBankDetails , fetchWalletDetails , fetchCurrency , currencyRate , importantData , withdrawRequest , depositAmount,withdrawHistory, 
   dipositeHistory , transactionHistory , addRating ,fetchRating , contactSupportRequest, fetchSupportComplainList,fetchSingleComplain,
   replyComplainTicket , closeComplainTicket , updateProfilePic , switchUserOwner , fetchMakeList , fetchModelList , fetchFeatureList,
