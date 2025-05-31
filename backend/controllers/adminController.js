@@ -11,6 +11,9 @@ import { contains } from "cheerio";
 
 const __dirname = url.fileURLToPath(new URL('.',import.meta.url));
 
+import slugify from 'slugify';
+
+
 
 //=========================== Start Web  Services =============================
 
@@ -96,6 +99,108 @@ const logout = async (req, res, next) => {
   }
 };
 //======================= End User Logout ============================== 
+
+const add_category = async (req, res, next) => {
+  const con = await connection();
+
+  const {
+    category_name,
+    description,
+    status = 1  // ✅ Default status to 1 if not provided
+  } = req.body;
+    console.log('req.file:', req.file);
+
+  const category_image = req.file.filename
+
+  console.log('req.body:', req.body);
+  // Input validation
+  if (!category_name || !description || !category_image) {
+    return res.status(400).json({ result: 'All fields are required.' });
+  }
+
+  try {
+    const slug = slugify(category_name, { lower: true, strict: true });
+    const created_at = new Date();
+    const updated_at = new Date();
+
+    await con.beginTransaction();
+
+    const sql = `INSERT INTO tbl_categories 
+      (category_name, slug, description, category_image, status, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+    const values = [
+      category_name,
+      slug,
+      description,
+      category_image,
+      status,
+      created_at,
+      updated_at
+    ];
+
+    await con.query(sql, values);
+    await con.commit();
+
+    res.status(200).json({ result: 'success' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+
+
+//======================= Start Fetch Category ============================== 
+const view_category = async (req, res) => {
+  const con = await connection();  // Assume connection() establishes DB connection
+  
+  // Define the base URL for images
+  const profileBaseUrl = `https://${process.env.Host}/upload/category/`;
+  
+  try {
+    // Fetch categories from the database
+    const [categories] = await con.query(`
+      SELECT 
+        id, 
+        category_name, 
+        slug, 
+        description, 
+        category_image, 
+        status, 
+        created_at, 
+        updated_at 
+      FROM tbl_categories WHERE 1
+    `);
+
+    // If categories are found
+    if (categories.length > 0) {
+      // Add the base URL to each category's image
+      const categoriesWithImagePath = categories.map(category => ({
+        ...category,
+        category_image: category.category_image ? profileBaseUrl + category.category_image : null  // Add image path if image exists
+      }));
+
+      res.status(200).json({ success: true, data: categoriesWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No categories found." });
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End Fetch Category ============================== 
+
+
+
+
+
 
 const home = async (req, res, next) => {
   const con = await connection();
@@ -7645,7 +7750,7 @@ const graphEarningsPost = async (req, res, next) => {
 
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-export {home, fetchChartData,fetchRideChartData, loginAdmin ,login , logout ,error404 , error500,  index,profile,profilePost,
+export {home, fetchChartData,fetchRideChartData, view_category, loginAdmin ,login , logout ,error404 , error500,  index,profile,profilePost,
   addUser, addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus,deleteUser,user_withdrawal_report,
   deposit_to_User, withdrawal_to_User  , 
   addOwner , addUserOwner, viewOwners, changeOwnerStatus, deleteOwner , Owner_withdrawal_report, 
@@ -7689,6 +7794,6 @@ export {home, fetchChartData,fetchRideChartData, loginAdmin ,login , logout ,err
    post_pending_bookings,post_confirm_bookings,post_ongoing_bookings,post_complete_bookings,post_cancel_bookings,
    postOwnerRatings,postUserRatings,
 
-   graphUser,graphUserPost,graphOwner,graphOwnerPost,graphAllVehicle,UserAccountRequest,
+   graphUser,graphUserPost,graphOwner,graphOwnerPost,graphAllVehicle,UserAccountRequest, add_category,
    changeUserAccountStatus,graphAllVehiclePost,graphBookings,graphBookingsPost,graphEarnings,graphEarningsPost
 } 

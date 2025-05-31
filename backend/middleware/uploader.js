@@ -34,12 +34,28 @@ const profileStorage = multer.diskStorage({
 
 
 
-const vehicleStorage = multer.diskStorage({  
+const categoryStorage = multer.diskStorage({  
   destination: function (req, file, cb) {
-    cb(null, 'public/images/vehicleUploads'); // Destination folder for uploaded images
+    cb(null, 'public/upload/category'); // Destination folder for uploaded images
   },
   filename: function (req, file, cb) {
-    console.log("Vehical data pic uploaded");
+    console.log("category data pic uploaded");
+    const img = file.originalname;
+    const timestamp = Date.now();
+    const extname = path.extname(file.originalname);
+
+    const imageName = `cat_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
+
+
+const vehicleStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/upload/category'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("category data pic uploaded");
     const img = file.originalname;
     const timestamp = Date.now();
     const extname = path.extname(file.originalname);
@@ -50,9 +66,11 @@ const vehicleStorage = multer.diskStorage({
 });
 
 
+
+
 const invoiceStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/images/vehicleUploads');
+    cb(null, 'public/images/categoryUploads');
   },
   filename: function (req, file, cb) {
     console.log("req.body:", req.body); // Log to see the full body
@@ -286,8 +304,10 @@ const profileUpload = multer({ storage: profileStorage });
 const docUploads = multer({ storage: docStorage });
 
 
-const vehicleUploads = multer({ storage: vehicleStorage });
+const categoryUploads = multer({ storage: categoryStorage });
 
+const vehicleUploads = multer({ storage: vehicleStorage });
+ 
 const invoiceUploads = multer({ storage: invoiceStorage });
 
 const postUploads = multer({ storage: postStorage });
@@ -311,6 +331,6 @@ const countryUploads  = multer({ storage: countryStorage });
 
 const userThreadUploads  = multer({ storage: userThreadStorage });
 
-export { imageUpload, fileUpload , profileUpload , docUploads ,vehicleUploads , postUploads , 
+export { imageUpload, fileUpload , vehicleUploads, profileUpload , docUploads , categoryUploads , postUploads , 
   thumbnailUploads , folderimgUploads , boardimgUploads ,chatUploads , groupchatUploads , 
   ticketUploads , sliderUploads , countryUploads, userThreadUploads,invoiceUploads};

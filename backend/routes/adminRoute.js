@@ -122,6 +122,8 @@ import { login , home, error404, error500, loginAdmin,profile,profilePost,addUse
   updateUserRating,
   updateOwnerRating,
   showNotifications,
+  view_category,
+  add_category,
   post_pending_bookings,post_confirm_bookings,post_ongoing_bookings,post_complete_bookings,post_cancel_bookings,
   postOwnerRatings,postUserRatings,
   graphUser,
@@ -141,7 +143,7 @@ import { isAuthenticatedAdmin } from "../middleware/Adminauth.js";
 
 import upload from '../middleware/upload.js';
 
-import { docUploads, profileUpload , vehicleUploads, countryUploads ,sliderUploads, fileUpload } from '../middleware/uploader.js';
+import { docUploads, profileUpload , categoryUploads, countryUploads ,sliderUploads, fileUpload } from '../middleware/uploader.js';
 
 const router = express.Router();
 
@@ -165,8 +167,15 @@ router.route('/login').post(profileUpload.none(),loginAdmin)
 
 router.route('/logout').post(profileUpload.none(),logout)
 
+router.route('/profile').get(isAuthenticatedAdmin,profile)
+
+//router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
+
 router.route('/logout').post(profileUpload.none(),logout)
 
+router.route('/view_category').get(isAuthenticatedAdmin,profileUpload.none(),view_category)
+
+router.route('/add_category').post(isAuthenticatedAdmin,categoryUploads.single('category_image'),add_category)
 
 //------------------------- Forgot Reset Password ----------------
 
@@ -181,9 +190,7 @@ router.route('/reset-password').post(resetpassword)
 
 
 
-router.route('/profile').get(isAuthenticatedAdmin,profile)
 
-router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
 
 router.route('/updateUserPic').post(isAuthenticatedAdmin,profileUpload.single('image'),updateUserPic)
 
@@ -331,7 +338,7 @@ router.route('/vehicleCategory').get(isAuthenticatedAdmin,vehicleCategory)
 
 router.route('/checkMake').post(isAuthenticatedAdmin, checkMake)
 
-router.route('/vehicleCategory').post(isAuthenticatedAdmin,vehicleUploads.single('make_image'),vehicleCategoryPost)
+router.route('/vehicleCategory').post(isAuthenticatedAdmin,categoryUploads.single('make_image'),vehicleCategoryPost)
 
 router.route('/vehicleModel').get(isAuthenticatedAdmin,vehicleModel)
 
@@ -356,9 +363,9 @@ router.route('/checkModel').post(isAuthenticatedAdmin, checkModel)
 
 router.route('/vehicleTypes').get(isAuthenticatedAdmin,vehicleTypes)
 
-router.route('/vehicleTypes').post(isAuthenticatedAdmin,vehicleUploads.single('type_image'),vehicleTypesPost)
+router.route('/vehicleTypes').post(isAuthenticatedAdmin,categoryUploads.single('type_image'),vehicleTypesPost)
 
-router.route('/UpdatevehicleTypes').post(isAuthenticatedAdmin,vehicleUploads.single('type_image'),UpdatevehicleTypes)
+router.route('/UpdatevehicleTypes').post(isAuthenticatedAdmin,categoryUploads.single('type_image'),UpdatevehicleTypes)
 
 
 router.route('/changeTypeStatus').post(isAuthenticatedAdmin,changeTypeStatus)
@@ -382,9 +389,9 @@ router.route('/vehicleFeatures').get(isAuthenticatedAdmin,vehicleFeatures)
 
 router.route('/checkFeature').post(isAuthenticatedAdmin,checkFeature)
 
-router.route('/vehicleFeatures').post(isAuthenticatedAdmin,vehicleUploads.single('feature_image'),vehicleFeaturesPost)
+router.route('/vehicleFeatures').post(isAuthenticatedAdmin,categoryUploads.single('feature_image'),vehicleFeaturesPost)
 
-router.route('/UpdateFeature').post(isAuthenticatedAdmin,vehicleUploads.single('type_image'),UpdateFeature)
+router.route('/UpdateFeature').post(isAuthenticatedAdmin,categoryUploads.single('type_image'),UpdateFeature)
 
 
 router.route('/changeFeatureStatus').post(isAuthenticatedAdmin,changeFeatureStatus)
