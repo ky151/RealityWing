@@ -1,5 +1,7 @@
 import express from 'express';
-import { sendOTP, verifyOTP ,userSignup ,ownerSignup,forgotPassword, resetpassword, userLogin, profile, updateprofile, changePassword, Logout, deleteAccount, tandc, pandp, getCategoryList, getAreaList,  faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails, fetchBankDetails, updateBankDetails, fetchWalletDetails, fetchCurrency, currencyRate, importantData, withdrawRequest, depositAmount, withdrawHistory, dipositeHistory, transactionHistory, addRating, fetchRating, contactSupportRequest, fetchSupportComplainList, replyComplainTicket, closeComplainTicket, fetchSingleComplain, updateProfilePic, switchUserOwner, fetchMakeList, fetchFeatureList, fetchCarTypeList, guestLogin, fetchModelList, fetchvehicleSeatList, addVehicle, fetchUserVehicleList, fetchOwnerVehicleList, FetchAllData, fetchCountryList, fetchOwnerVehicleDetails, fetchUserVehicleDetails, likeDislike, fetchWishlist, addRecentViewVehicle, fetchRecentViewVehicle, addGuestRecentViewVehicle, fetchGuestRecentViewVehicle, userBooking, fetchCouponList, checkVehicleAvailability, availabilityCalender, deleteVehicle, fetchBookingDetails, fetchUserBookingList, fetchOwnerBookingList, fetchVehicleRent, vehicleSerchFilter, bookingPayment, fetchReasons, cancelBooking, acceptBooking, fetchHelpReasons, cancellationPolicy, checkInStatus, checkOutStatus, fetchUserBookingHistory, fetchOwnerBookingHistory, completedReward, fetchPromotionalPlans, addPromotionalPlan, aboutUs, fetchSlider, userSupportRequest, fetchSingleUserComplain, replyUserComplainTicket, closeUserComplainTicket, fetchUserComplainList, dateChangeStatus, dateChangeRequest, updateVehicle, countrySerchFilter, updateVehicleAvailibility, loginRecheck, fetchVehicleList, fetchEarnings, getInvoiceData, fetchUserSideOwnerVehicleList, updateDeviceToken, fetchNotification, fetchNotificationCount, deleteNotification, updateProfileRequest, applyCoupon, removeAppliedCoupon, rewardHistory, addInvoice, checkInviteRefferalCode, updateCheckOutData, UpdateCheckInData, cancelWithdrawRequest, accountRecoveryRequest, fetchBookingIdList } from '../controllers/apiController.js';
+import { userSignup, userLogin, logout, changePassword, getUserProfile, getCategoryList, getAreaList, tandc, pandp,
+    
+    sendOTP, verifyOTP ,ownerSignup,forgotPassword, resetpassword,  profile, updateprofile,  deleteAccount,    faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails, fetchBankDetails, updateBankDetails, fetchWalletDetails, fetchCurrency, currencyRate, importantData, withdrawRequest, depositAmount, withdrawHistory, dipositeHistory, transactionHistory, addRating, fetchRating, contactSupportRequest, fetchSupportComplainList, replyComplainTicket, closeComplainTicket, fetchSingleComplain, updateProfilePic, switchUserOwner, fetchMakeList, fetchFeatureList, fetchCarTypeList, guestLogin, fetchModelList, fetchvehicleSeatList, addVehicle, fetchUserVehicleList, fetchOwnerVehicleList, FetchAllData, fetchCountryList, fetchOwnerVehicleDetails, fetchUserVehicleDetails, likeDislike, fetchWishlist, addRecentViewVehicle, fetchRecentViewVehicle, addGuestRecentViewVehicle, fetchGuestRecentViewVehicle, userBooking, fetchCouponList, checkVehicleAvailability, availabilityCalender, deleteVehicle, fetchBookingDetails, fetchUserBookingList, fetchOwnerBookingList, fetchVehicleRent, vehicleSerchFilter, bookingPayment, fetchReasons, cancelBooking, acceptBooking, fetchHelpReasons, cancellationPolicy, checkInStatus, checkOutStatus, fetchUserBookingHistory, fetchOwnerBookingHistory, completedReward, fetchPromotionalPlans, addPromotionalPlan, aboutUs, fetchSlider, userSupportRequest, fetchSingleUserComplain, replyUserComplainTicket, closeUserComplainTicket, fetchUserComplainList, dateChangeStatus, dateChangeRequest, updateVehicle, countrySerchFilter, updateVehicleAvailibility, loginRecheck, fetchVehicleList, fetchEarnings, getInvoiceData, fetchUserSideOwnerVehicleList, updateDeviceToken, fetchNotification, fetchNotificationCount, deleteNotification, updateProfileRequest, applyCoupon, removeAppliedCoupon, rewardHistory, addInvoice, checkInviteRefferalCode, updateCheckOutData, UpdateCheckInData, cancelWithdrawRequest, accountRecoveryRequest, fetchBookingIdList } from '../controllers/apiController.js';
 import upload from '../middleware/upload.js';  
 import { isAuthenticatedUser } from '../middleware/Userauth.js';
 import { docUploads, invoiceUploads, profileUpload, userThreadUploads, vehicleUploads } from '../middleware/uploader.js';
@@ -8,33 +10,34 @@ import { rateLimiter } from '../middleware/rateLimiter.js';
 const router = express.Router();
 
 router.route('/userSignup').post(docUploads.array('document_images'), userSignup)
-router.route('/login').post(rateLimiter,upload.none(),userLogin)
-router.route('/Logout').post(isAuthenticatedUser,upload.none(),Logout)
+router.route('/userLogin').post(rateLimiter,upload.none(),userLogin)
+router.route('/logout').post(isAuthenticatedUser,upload.none(),logout)
+router.route('/changePassword').post(isAuthenticatedUser,upload.none(),changePassword)
+router.route('/getUserProfile').post(isAuthenticatedUser,upload.none(),getUserProfile)
+router.route('/getCategoryList').get(upload.none(),getCategoryList)
+router.route('/getAreaList').get(upload.none(),getAreaList)
+router.route('/tandc').get(upload.none(),tandc)
+router.route('/pandp').get(upload.none(),pandp)
+
+
+
 
 router.route('/forgotPassword').post(upload.none(),forgotPassword)
 router.route('/sendOTP').post(upload.none(),sendOTP)
 router.route('/verifyOTP').post(upload.none(),verifyOTP)
 router.route('/resetpassword').post(upload.none(),resetpassword)
-
 router.route('/updateDeviceToken').post(isAuthenticatedUser, upload.none(), updateDeviceToken)
-router.route('/tandc').get(upload.none(),tandc)
-router.route('/pandp').get(upload.none(),pandp)
-router.route('/getCategoryList').get(upload.none(),getCategoryList)
-router.route('/getAreaList').get(upload.none(),getAreaList)
-
-
 router.route('/faqs').post(upload.none(),faqs)
 router.route('/cancellationPolicy').get(upload.none(),cancellationPolicy)
 router.route('/currencyRate').get(upload.none(),currencyRate)
 router.route('/ownerSignup').post(docUploads.array('document_images'), ownerSignup)
-
 router.route('/loginRecheck').post(isAuthenticatedUser,upload.none(),loginRecheck)
 router.route('/guestLogin').post(upload.none(),guestLogin)
 router.route('/profile').post(isAuthenticatedUser,upload.none(),profile)
 router.route('/updateprofile').post(isAuthenticatedUser,docUploads.array('document_images'), updateprofile)
 router.route('/updateProfileRequest').post(isAuthenticatedUser,docUploads.array('document_images'), updateProfileRequest)
 router.route('/updateprofilePic').post(isAuthenticatedUser, profileUpload.single('image'),updateProfilePic)
-router.route('/changePassword').post(isAuthenticatedUser,upload.none(),changePassword)
+
 router.route('/deleteAccount').post(isAuthenticatedUser,upload.none(),deleteAccount)
 router.route('/addUserDocument').post(isAuthenticatedUser,docUploads.array('document_images'),addUserDocument)
 router.route('/addCard').post(isAuthenticatedUser,upload.none(),addCard)
@@ -70,128 +73,66 @@ router.route('/addVehicle').post(isAuthenticatedUser,vehicleUploads.fields([{ na
 router.route('/updateVehicle').post(isAuthenticatedUser,vehicleUploads.fields([{ name: 'vehicle_insurance_images', maxCount: 5 }, { name: 'vehicle_images', maxCount: 10 }, { name: 'mot_certificate_images', maxCount: 5 } ]),updateVehicle)
 
 router.route('/fetchUserVehicleList').post(upload.none(),isAuthenticatedUser,fetchUserVehicleList)
-
 router.route('/fetchOwnerVehicleList').post(upload.none(),isAuthenticatedUser,fetchOwnerVehicleList)
-
 router.route('/FetchAllData').post(upload.none(),isAuthenticatedUser,FetchAllData)
-
 router.route('/fetchCountryList').post(upload.none(),isAuthenticatedUser,fetchCountryList)
-
 router.route('/fetchOwnerVehicleDetails').post(upload.none(),isAuthenticatedUser,fetchOwnerVehicleDetails)
-
 router.route('/fetchUserVehicleDetails').post(upload.none(),isAuthenticatedUser,fetchUserVehicleDetails)
-
 router.route('/likeDislike').post(upload.none(),isAuthenticatedUser,likeDislike)
-
 router.route('/fetchWishlist').post(upload.none(),isAuthenticatedUser,fetchWishlist)
-
 router.route('/addRecentViewVehicle').post(upload.none(),isAuthenticatedUser,addRecentViewVehicle)
-
 router.route('/fetchRecentViewVehicle').post(upload.none(),isAuthenticatedUser,fetchRecentViewVehicle)
-
 router.route('/addGuestRecentViewVehicle').post(upload.none(),isAuthenticatedUser,addGuestRecentViewVehicle)
-
 router.route('/fetchGuestRecentViewVehicle').post(upload.none(),isAuthenticatedUser,fetchGuestRecentViewVehicle)
-
 router.route('/fetchCouponList').post(vehicleUploads.none(),isAuthenticatedUser,fetchCouponList)
-
 router.route('/checkVehicleAvailability').post(vehicleUploads.none(),isAuthenticatedUser,checkVehicleAvailability)
-
 router.route('/availabilityCalender').post(vehicleUploads.none(),isAuthenticatedUser,availabilityCalender)
-
 router.route('/userBooking').post(vehicleUploads.none(),isAuthenticatedUser,userBooking)
-
 router.route('/deleteVehicle').post(vehicleUploads.none(),isAuthenticatedUser,deleteVehicle)
-
 router.route('/fetchBookingDetails').post(vehicleUploads.none(),isAuthenticatedUser,fetchBookingDetails)
-
 router.route('/fetchUserBookingList').post(vehicleUploads.none(),isAuthenticatedUser,fetchUserBookingList)
-
 router.route('/fetchOwnerBookingList').post(vehicleUploads.none(),isAuthenticatedUser,fetchOwnerBookingList)
-
 router.route('/fetchUserSideOwnerVehicleList').post(vehicleUploads.none(),isAuthenticatedUser,fetchUserSideOwnerVehicleList)
-
 router.route('/fetchVehicleRent').post(vehicleUploads.none(),isAuthenticatedUser,fetchVehicleRent)
-
 router.route('/vehicleSerchFilter').post(vehicleUploads.none(),isAuthenticatedUser,vehicleSerchFilter)
-
 router.route('/bookingPayment').post(vehicleUploads.none(),isAuthenticatedUser,bookingPayment)
-
 router.route('/fetchReasons').post(vehicleUploads.none(),isAuthenticatedUser,fetchReasons)
-
 router.route('/cancelBooking').post(vehicleUploads.none(),isAuthenticatedUser,cancelBooking)
-
 router.route('/acceptBooking').post(vehicleUploads.none(),isAuthenticatedUser,acceptBooking)
-
 router.route('/getInvoiceData').post(vehicleUploads.none(),isAuthenticatedUser,getInvoiceData)
-
 router.route('/fetchHelpReasons').post(vehicleUploads.none(),isAuthenticatedUser,fetchHelpReasons) 
-
 router.route('/checkInStatus').post(isAuthenticatedUser,vehicleUploads.fields([{ name: 'carImages', maxCount: 10 }, { name: 'signatureImage', maxCount: 1 }]),checkInStatus)
-
 router.route('/checkOutStatus').post(isAuthenticatedUser,vehicleUploads.fields([{ name: 'carImages', maxCount: 10 }, { name: 'signatureImage', maxCount: 1 }]),checkOutStatus)
-
 router.route('/fetchUserBookingHistory').post(vehicleUploads.none(),isAuthenticatedUser,fetchUserBookingHistory)
-
 router.route('/fetchOwnerBookingHistory').post(vehicleUploads.none(),isAuthenticatedUser,fetchOwnerBookingHistory) 
-
 router.route('/completedReward').post(vehicleUploads.none(),isAuthenticatedUser,completedReward) 
-
 router.route('/fetchPromotionalPlans').post(vehicleUploads.none(),isAuthenticatedUser,fetchPromotionalPlans) 
-
 router.route('/addPromotionalPlan').post(vehicleUploads.none(),isAuthenticatedUser,addPromotionalPlan) 
-
 router.route('/aboutUs').get(vehicleUploads.none(),aboutUs) 
-
 router.route('/fetchSlider').get(vehicleUploads.none(),fetchSlider) 
-
 router.route('/userSupportRequest').post(isAuthenticatedUser,userThreadUploads.array('images'),userSupportRequest) 
-
 router.route('/fetchUserComplainList').post(userThreadUploads.none(),isAuthenticatedUser,fetchUserComplainList) 
-
 router.route('/fetchSingleUserComplain').post(userThreadUploads.none(),isAuthenticatedUser,fetchSingleUserComplain) 
-
 router.route('/replyUserComplainTicket').post(userThreadUploads.none(),isAuthenticatedUser,replyUserComplainTicket) 
-
 router.route('/closeUserComplainTicket').post(userThreadUploads.none(),isAuthenticatedUser,closeUserComplainTicket) 
-
 router.route('/dateChangeStatus').post(vehicleUploads.none(),isAuthenticatedUser,dateChangeStatus) 
-
 router.route('/dateChangeRequest').post(vehicleUploads.none(),isAuthenticatedUser,dateChangeRequest) 
-
 router.route('/countrySerchFilter').post(vehicleUploads.none(),isAuthenticatedUser,countrySerchFilter) 
-
 router.route('/updateVehicleAvailibility').post(vehicleUploads.none(),isAuthenticatedUser,updateVehicleAvailibility) 
-
 router.route('/fetchVehicleList').post(vehicleUploads.none(),isAuthenticatedUser, fetchVehicleList)
-
 router.route('/fetchEarnings').post(rateLimiter,vehicleUploads.none(),isAuthenticatedUser,fetchEarnings)
-
 router.route('/fetchNotification').post(vehicleUploads.none(), isAuthenticatedUser,fetchNotification)
-
 router.route('/fetchNotificationCount').post(vehicleUploads.none(), isAuthenticatedUser,fetchNotificationCount)
-
 router.route('/deleteNotification').post(vehicleUploads.none(), isAuthenticatedUser,deleteNotification)
-
 router.route('/applyCoupon').post(vehicleUploads.none(), isAuthenticatedUser,applyCoupon)
-
 router.route('/removeAppliedCoupon').post(vehicleUploads.none(), isAuthenticatedUser,removeAppliedCoupon)
-
 router.route('/rewardHistory').post(vehicleUploads.none(), isAuthenticatedUser , rewardHistory)
-
 router.route('/addInvoice').post(isAuthenticatedUser,invoiceUploads.single('file'),addInvoice)
-
 router.route('/checkInviteRefferalCode').post(vehicleUploads.none(),checkInviteRefferalCode)
-
 router.route('/UpdateCheckInData').post(vehicleUploads.fields([{ name: 'carImages', maxCount: 10 }, { name: 'signatureImage', maxCount: 1 }]),isAuthenticatedUser,UpdateCheckInData)
-
 router.route('/updateCheckOutData').post(vehicleUploads.fields([{ name: 'carImages', maxCount: 10 }, { name: 'signatureImage', maxCount: 1 }]),isAuthenticatedUser,updateCheckOutData)
-
 router.route('/cancelWithdrawRequest').post(vehicleUploads.none(),isAuthenticatedUser,cancelWithdrawRequest)
-
-
 router.route('/accountRecoveryRequest').post(vehicleUploads.none(),accountRecoveryRequest)
-
 router.route('/fetchBookingIdList').post(isAuthenticatedUser,fetchBookingIdList)
 
 export default router;

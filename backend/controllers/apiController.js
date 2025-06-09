@@ -11,7 +11,6 @@ dotenv.config({path:"./config.env"});
 
 const secretKey = process.env.ENCRYPTION_SECRET_KEY;
 
-
 //======================= Start User Registration ============================== 
 const userSignup = async (req, res, next) => {
   const con = await connection();
@@ -156,7 +155,7 @@ const userLogin = async (req, res, next) => {
 //======================= End User Login ============================== 
   
 //======================= Start User Logout ============================== 
-const Logout = async (req, res, next) => {
+const logout = async (req, res, next) => {
   // console.log("logout body", req.body);
   const con = await connection();
   const userID = req.user.user_id;  // Assuming userID is stored in req.user
@@ -185,10 +184,76 @@ const Logout = async (req, res, next) => {
     con.release();
   }
 };
-
 //======================= End User Logout ============================== 
 
-//======================= Start Fetch Category ============================== 
+//======================= Start changePassword ============================== 
+const changePassword = async (req, res, next) => {
+  const con = await connection();
+  const userID = req.user.user_id; // Make sure req.user is populated from auth middleware
+  const oldPassword = req.body.oldPassword; // Use camelCase consistently
+
+  try {
+    await con.beginTransaction();
+
+    const newPassword = hashPassword(req.body.confirmPassword); // Assuming confirmPassword is the new password
+    let [userdata] = await con.query('SELECT * FROM tbl_users WHERE user_id = ?', [userID]);
+
+    if (!userdata || userdata.length === 0) {
+      res.status(404).json({ result: "User Not Found" });
+      return;
+    }
+
+    const isValid = comparePassword(oldPassword, userdata[0].password);
+
+    if (!isValid) {
+      res.status(200).json({ result: "Incorrect Old Password" });
+      return;
+    }
+
+    await con.query("UPDATE tbl_users SET password = ? WHERE user_id = ?", [newPassword, userID]);
+
+    await con.commit();
+    res.json({ result: "success" });
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End changePassword ==============================
+
+//======================= Start getUserProfile ==============================
+const getUserProfile = async (req, res, next) => {
+  const con = await connection();
+  const profileBaseUrl = `http://${process.env.Host}/upload/profile/`;
+
+  try {
+    const userID = req.user.user_id;
+
+    let [users] = await con.query('SELECT * FROM tbl_users WHERE user_id = ?', [userID]);
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ result: "User not found" });
+    }
+
+    const user = users[0];
+
+    // Add profile image URL
+    user.profile_image_type = user.profile_image_type ? `${profileBaseUrl}${user.profile_image_type}` : '';
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error in profile API:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End getUserProfile ==============================
+
+//======================= Start getCategoryList ============================== 
 const getCategoryList = async (req, res) => {
   const con = await connection();  // Assume connection() establishes DB connection
   
@@ -229,9 +294,9 @@ const getCategoryList = async (req, res) => {
     con.release();
   }
 };
-//======================= End Fetch Category ============================== 
+//======================= End getCategoryList ============================== 
 
-//======================= Start Fetch Category ============================== 
+//======================= Start getAreaList ============================== 
 const getAreaList = async (req, res) => {
   const con = await connection();  // Assume connection() establishes DB connection
 
@@ -270,8 +335,71 @@ const getAreaList = async (req, res) => {
     con.release();
   }
 };
+//======================= End getAreaList ============================== 
 
-//======================= End Fetch Category ============================== 
+//======================= Start tandc ==============================
+const tandc = async (req, res, next) => {
+  const con = await connection();
+  //const type = req.query.user_type;
+  ////console.log(type);
+  try {  
+    const [result] = await con.query('SELECT * FROM tbl_tandc');
+    if (result.length > 0) {
+      const termsContent = result[0].terms;
+
+
+        // Wrap the terms content in a container with 250% zoom level
+        const zoomedContent = `${termsContent}`;
+      
+        // Return the HTML content with zoom applied as a response
+        res.send(zoomedContent);
+     // res.send(termsContent);
+    } else { 
+      res.status(200).send('Terms and conditions not found');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    con.release();
+  }
+};
+//======================= End tandc ============================== 
+
+//======================= Start pandp ==============================
+const pandp = async (req, res, next) => {
+  const con = await connection();
+  //const type = req.query.user_type;
+  try {
+    // Fetch the terms and conditions from the database
+    const [result] = await con.query('SELECT * FROM tbl_pandp');
+
+    if (result.length > 0) {
+      const policyContent = result[0].policy;
+
+
+      const zoomedContent = `${policyContent}`;
+      
+      // Return the HTML content with zoom applied as a response
+      res.send(zoomedContent);
+
+      // Return the HTML content as a response
+      //res.send(policyContent);
+    } else {
+      // If terms and conditions not found, you can send an appropriate response
+      res.status(200).send('User Privacy not found');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    con.release();
+  }
+};
+//======================= End pandp ============================== 
+
+//======================= Start updateProfile ==============================
+//======================= End updateProfile ============================== 
 
 const ownerSignup =  async(req,res,next) => {
   const con = await connection();
@@ -538,7 +666,36 @@ try {
 
 
 
+// const changePassword = async(req, res, next) => {
+//   const con = await connection();
+//   const userID = req.user.user_id;
+//   const oldPassword = req.body.oldpassword;
 
+//   try {
+//     await con.beginTransaction();
+//     const newPassword = hashPassword(req.body.confirmPassword);
+//     var userdata;
+//     [[userdata]]= await con.query('SELECT * FROM tbl_user WHERE user_id = ?',[userID]);
+    
+//     let isValid = comparePassword(oldPassword, userdata.password);
+
+//     ////console.log("isValid--> ",isValid)
+
+//     if (!isValid) {
+//       res.status(200).json({ result: "Incorrect Old Password" });
+//       return;
+//     }
+//     const [results] = await con.query("UPDATE tbl_user SET password = ? WHERE user_id = ?", [newPassword, userID]); 
+//     await con.commit();
+//     res.json({result :"success"});
+//   } catch (error) {
+//     await con.rollback();
+//     console.error('Error:',error);
+//     res.status(500).json({result: 'Internal Server Error'} )
+//   } finally {
+//     con.release();
+//   }
+// }
 
 //---------------------- Login /Logout API end -------------------------------
 
@@ -569,66 +726,11 @@ const cancellationPolicy = async (req, res, next) => {
 };
 //======================   Terms & Condition  Webview ================== 
 
-const tandc = async (req, res, next) => {
-  const con = await connection();
-  //const type = req.query.user_type;
-  ////console.log(type);
-  try {  
-    const [result] = await con.query('SELECT * FROM tbl_tandc');
-    if (result.length > 0) {
-      const termsContent = result[0].terms;
 
-
-        // Wrap the terms content in a container with 250% zoom level
-        const zoomedContent = `${termsContent}`;
-      
-        // Return the HTML content with zoom applied as a response
-        res.send(zoomedContent);
-     // res.send(termsContent);
-    } else { 
-      res.status(200).send('Terms and conditions not found');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Internal Server Error');
-  } finally {
-    con.release();
-  }
-
-
-};
 
 //========================== UserPrivacy and policy webview ============== 
 
-const pandp = async (req, res, next) => {
-  const con = await connection();
-  //const type = req.query.user_type;
-  try {
-    // Fetch the terms and conditions from the database
-    const [result] = await con.query('SELECT * FROM tbl_pandp');
 
-    if (result.length > 0) {
-      const policyContent = result[0].policy;
-
-
-      const zoomedContent = `${policyContent}`;
-      
-      // Return the HTML content with zoom applied as a response
-      res.send(zoomedContent);
-
-      // Return the HTML content as a response
-      //res.send(policyContent);
-    } else {
-      // If terms and conditions not found, you can send an appropriate response
-      res.status(200).send('User Privacy not found');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Internal Server Error');
-  } finally {
-    con.release();
-  }
-};
 
 
 //=======================  FAQ webview ========================= 
@@ -1236,36 +1338,7 @@ const deleteAccount = async (req,res,next) => {
   }
 }
 
-const changePassword = async(req, res, next) => {
-  const con = await connection();
-  const userID = req.user.user_id;
-  const oldPassword = req.body.oldpassword;
 
-  try {
-    await con.beginTransaction();
-    const newPassword = hashPassword(req.body.confirmPassword);
-    var userdata;
-    [[userdata]]= await con.query('SELECT * FROM tbl_user WHERE user_id = ?',[userID]);
-    
-    let isValid = comparePassword(oldPassword, userdata.password);
-
-    ////console.log("isValid--> ",isValid)
-
-    if (!isValid) {
-      res.status(200).json({ result: "Incorrect Old Password" });
-      return;
-    }
-    const [results] = await con.query("UPDATE tbl_user SET password = ? WHERE user_id = ?", [newPassword, userID]); 
-    await con.commit();
-    res.json({result :"success"});
-  } catch (error) {
-    await con.rollback();
-    console.error('Error:',error);
-    res.status(500).json({result: 'Internal Server Error'} )
-  } finally {
-    con.release();
-  }
-}
 //------------------- Profile End ----------------------//
 
 const addUserDocument = async (req, res, next) => {
@@ -9661,8 +9734,10 @@ const fetchBookingIdList = async (req,res,next) => {
   }
 }
 
-export { sendOTP, verifyOTP, userSignup, ownerSignup, forgotPassword, resetpassword,guestLogin, userLogin, profile, updateprofile, changePassword, Logout,
-  deleteAccount, tandc, pandp, getCategoryList, getAreaList, faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 
+export { userSignup, userLogin, logout, changePassword, getUserProfile, getCategoryList, getAreaList, tandc, pandp,
+
+  forgotPassword, sendOTP, verifyOTP,  ownerSignup,  resetpassword,guestLogin,  profile, updateprofile,  
+  deleteAccount,   faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 
   updateBankDetails , fetchWalletDetails , fetchCurrency , currencyRate , importantData , withdrawRequest , depositAmount,withdrawHistory, 
   dipositeHistory , transactionHistory , addRating ,fetchRating , contactSupportRequest, fetchSupportComplainList,fetchSingleComplain,
   replyComplainTicket , closeComplainTicket , updateProfilePic , switchUserOwner , fetchMakeList , fetchModelList , fetchFeatureList,
