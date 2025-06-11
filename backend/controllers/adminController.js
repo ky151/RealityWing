@@ -18,7 +18,7 @@ import slugify from 'slugify';
 //=========================== Start Web  Services =============================
 
 //======================= Start Admin Login ============================== 
-const loginAdmin = async (req, res, next) => {
+const adminLogin = async (req, res, next) => {
   const con = await connection();
 
   try {
@@ -45,7 +45,7 @@ const loginAdmin = async (req, res, next) => {
     if (admin.status == '0') {
       return res.status(403).json({ result: "Account is inactive or blocked." });
     }
-
+   
     // 🔐 Compare password
     const isValid = comparePassword(password, admin.password);
     if (!isValid) {
@@ -67,6 +67,91 @@ const loginAdmin = async (req, res, next) => {
   }
 };
 //======================= End Admin Login ============================== 
+
+//======================= Start adminProfile ==============================
+const adminProfile = async (req, res, next) => {
+  const con = await connection();
+  const profileBaseUrl = `http://${process.env.Host}/upload/profile/`;
+
+  try {
+    //const adminID = req.admin.admin_id; // Ensure this comes from middleware like `auth`
+
+    //const [admins] = await con.query('SELECT id, name, email, profile_image, role, status, created_at, updated_at FROM tbl_admin WHERE id = ?', [adminID]);
+    const [admins] = await con.query('SELECT id, name, email, profile_image, role, status, created_at, updated_at FROM tbl_admin ORDER BY id ASC LIMIT 1');
+    
+    if (!admins || admins.length === 0) {
+      return res.status(404).json({ result: "Admin not found" });
+    }
+
+    const admin = admins[0];
+
+    // Add full profile image URL
+    admin.profile_image = admin.profile_image ? `${profileBaseUrl}${admin.profile_image}` : '';
+
+    res.json(admin);
+  } catch (error) {
+    console.error('Error in adminProfile API:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End adminProfile ==============================
+
+//======================= Start changePassword ==============================
+const changePassword = async (req, res, next) => {
+  const con = await connection();
+
+  const oldPassword = req.body.oldPassword;
+  const newPasswordRaw = req.body.confirmPassword;
+
+  try {
+    await con.beginTransaction();
+
+    // Fetch the first admin (you can change the condition as needed)
+    const [admins] = await con.query(
+      'SELECT id, password FROM tbl_admin ORDER BY id ASC LIMIT 1'
+    );
+
+    if (!admins || admins.length === 0) {
+      return res.status(404).json({ result: "Admin Not Found" });
+    }
+
+    const admin = admins[0];
+
+    const isValid = comparePassword(oldPassword, admin.password);
+
+    if (!isValid) {
+      return res.status(200).json({ result: "Incorrect Old Password" });
+    }
+
+    const hashedNewPassword = hashPassword(newPasswordRaw);
+
+    await con.query(
+      'UPDATE tbl_admin SET password = ? WHERE id = ?',
+      [hashedNewPassword, admin.id]
+    );
+
+    await con.commit();
+    res.json({ result: "success" });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error in adminChangePassword:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End changePassword ==============================
+
+
+
+
+
+
+
+
 
 //======================= Start User Logout ============================== 
 const logout = async (req, res, next) => {
@@ -100,7 +185,7 @@ const logout = async (req, res, next) => {
 };
 //======================= End User Logout ============================== 
 
-const add_category = async (req, res, next) => {
+const addCategory = async (req, res, next) => {
   const con = await connection();
 
   const {
@@ -582,24 +667,24 @@ const error500 = async(req,res,next) => {
 
 
 
-const profile = async(req,res,next) => {
-  const con = await connection();
-  const output= req.cookies.rental_msg || '';
-  try {
-      await con.beginTransaction();
+// const adminProfile = async(req,res,next) => {
+//   const con = await connection();
+//   const output= req.cookies.rental_msg || '';
+//   try {
+//       await con.beginTransaction();
 
-     await con.commit(); 
+//      await con.commit(); 
 
-     res.render('superadmin/profile',{output:output})
+//      res.render('superadmin/profile',{output:output})
 
-  } catch (error) {
-     console.error('Error:',error);
-     await con.rollback(); 
-     res.status(500).send('Internal Server Error');
-  } finally {
-      con.release();
-  }
-}
+//   } catch (error) {
+//      console.error('Error:',error);
+//      await con.rollback(); 
+//      res.status(500).send('Internal Server Error');
+//   } finally {
+//       con.release();
+//   }
+// }
 
 
 const updateUserPic = async (req, res, next) => {
@@ -7750,7 +7835,9 @@ const graphEarningsPost = async (req, res, next) => {
 
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-export {home, fetchChartData,fetchRideChartData, view_category, loginAdmin ,login , logout ,error404 , error500,  index,profile,profilePost,
+export { adminLogin, adminProfile, changePassword, addCategory,
+  
+  home, fetchChartData,fetchRideChartData, view_category ,login , logout ,error404 , error500,  index,profilePost,
   addUser, addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus,deleteUser,user_withdrawal_report,
   deposit_to_User, withdrawal_to_User  , 
   addOwner , addUserOwner, viewOwners, changeOwnerStatus, deleteOwner , Owner_withdrawal_report, 
@@ -7794,6 +7881,6 @@ export {home, fetchChartData,fetchRideChartData, view_category, loginAdmin ,logi
    post_pending_bookings,post_confirm_bookings,post_ongoing_bookings,post_complete_bookings,post_cancel_bookings,
    postOwnerRatings,postUserRatings,
 
-   graphUser,graphUserPost,graphOwner,graphOwnerPost,graphAllVehicle,UserAccountRequest, add_category,
+   graphUser,graphUserPost,graphOwner,graphOwnerPost,graphAllVehicle,UserAccountRequest, 
    changeUserAccountStatus,graphAllVehiclePost,graphBookings,graphBookingsPost,graphEarnings,graphEarningsPost
 } 

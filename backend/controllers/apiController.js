@@ -290,7 +290,7 @@ const getCategoryList = async (req, res) => {
   } catch (error) {
     console.error("Error fetching categories:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
-  } finally {
+  } finally { 
     con.release();
   }
 };

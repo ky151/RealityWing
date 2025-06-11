@@ -1,6 +1,8 @@
 import express from "express";
 
-import { login , home, error404, error500, loginAdmin,profile,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, deleteUser, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, logout, index ,
+import { adminLogin, adminProfile, changePassword, addCategory,
+  
+  home, error404, error500,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, deleteUser, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
   checkemail,
   checkphonenumber,
@@ -123,7 +125,6 @@ import { login , home, error404, error500, loginAdmin,profile,profilePost,addUse
   updateOwnerRating,
   showNotifications,
   view_category,
-  add_category,
   post_pending_bookings,post_confirm_bookings,post_ongoing_bookings,post_complete_bookings,post_cancel_bookings,
   postOwnerRatings,postUserRatings,
   graphUser,
@@ -148,34 +149,27 @@ import { docUploads, profileUpload , categoryUploads, countryUploads ,sliderUplo
 const router = express.Router();
 
 router.route('/').get(isAuthenticatedAdmin,home)
-
 router.route('/index').get(isAuthenticatedAdmin,index)
-
 router.route('/fetchChartData').get(isAuthenticatedAdmin,fetchChartData)
-
 router.route('/fetchRideChartData').get(isAuthenticatedAdmin, fetchRideChartData)
-
-
-
-
 
 //------------------- Admin Start -------------------------------
 
-//router.route('/login').get(login);
+router.route('/adminLogin').post(profileUpload.none(),adminLogin)
+router.route('/adminProfile').get(isAuthenticatedAdmin,profileUpload.none(),adminProfile)
+router.route('/changePassword').get(isAuthenticatedAdmin,profileUpload.none(),changePassword)
+router.route('/addCategory').post(isAuthenticatedAdmin,categoryUploads.single('category_image'),addCategory,)
 
-router.route('/login').post(profileUpload.none(),loginAdmin)
 
-router.route('/logout').post(profileUpload.none(),logout)
-
-router.route('/profile').get(isAuthenticatedAdmin,profile)
+//------------------------- Forgot Reset Password ----------------
 
 //router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
-
-router.route('/logout').post(profileUpload.none(),logout)
+//router.route('/logout').post(profileUpload.none(),logout)
+//router.route('/logout').post(profileUpload.none(),logout)
 
 router.route('/view_category').get(isAuthenticatedAdmin,profileUpload.none(),view_category)
 
-router.route('/add_category').post(isAuthenticatedAdmin,categoryUploads.single('category_image'),add_category)
+
 
 //------------------------- Forgot Reset Password ----------------
 
