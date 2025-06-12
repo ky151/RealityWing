@@ -1,15 +1,15 @@
 import express from "express";
 
-import { adminLogin, adminProfile, changePassword, addCategory,
+import { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, viewUser, deleteUser, addArea, viewArea, deleteArea, 
   
-  home, error404, error500,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, deleteUser, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
+  home, error404, error500,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
   checkemail,
   checkphonenumber,
   vehicleCategoryPost,
   vehicleModelPost,
   updateModels, 
-  deleteMake,
+  deleteMake,  
   changeMakeStatus,
   checkModel,
   checkMake,
@@ -124,7 +124,6 @@ import { adminLogin, adminProfile, changePassword, addCategory,
   updateUserRating,
   updateOwnerRating,
   showNotifications,
-  view_category,
   post_pending_bookings,post_confirm_bookings,post_ongoing_bookings,post_complete_bookings,post_cancel_bookings,
   postOwnerRatings,postUserRatings,
   graphUser,
@@ -144,7 +143,7 @@ import { isAuthenticatedAdmin } from "../middleware/Adminauth.js";
 
 import upload from '../middleware/upload.js';
 
-import { docUploads, profileUpload , categoryUploads, countryUploads ,sliderUploads, fileUpload } from '../middleware/uploader.js';
+import { categoryUploads, profileUpload, areaUploads, docUploads, countryUploads , fileUpload } from '../middleware/uploader.js';
 
 const router = express.Router();
 
@@ -158,8 +157,15 @@ router.route('/fetchRideChartData').get(isAuthenticatedAdmin, fetchRideChartData
 router.route('/adminLogin').post(profileUpload.none(),adminLogin)
 router.route('/adminProfile').get(isAuthenticatedAdmin,profileUpload.none(),adminProfile)
 router.route('/changePassword').get(isAuthenticatedAdmin,profileUpload.none(),changePassword)
-router.route('/addCategory').post(isAuthenticatedAdmin,categoryUploads.single('category_image'),addCategory,)
-
+router.route('/addCategory').post(isAuthenticatedAdmin,categoryUploads.single('category_image'),addCategory)
+router.route('/viewCategory').get(isAuthenticatedAdmin,profileUpload.none(),viewCategory)
+router.route('/deleteCategory').post(isAuthenticatedAdmin,profileUpload.none(),deleteCategory)
+router.route('/addUser').post(isAuthenticatedAdmin,profileUpload.single('profile_image'),addUser)
+router.route('/viewUser').get(isAuthenticatedAdmin,profileUpload.none(),viewUser)
+router.route('/deleteUser').post(isAuthenticatedAdmin,profileUpload.none(),deleteUser)
+router.route('/addArea').post(isAuthenticatedAdmin,areaUploads.single('area_image'),addArea)
+router.route('/viewArea').get(isAuthenticatedAdmin,profileUpload.none(),viewArea)
+router.route('/deleteArea').post(isAuthenticatedAdmin,profileUpload.none(),deleteArea)
 
 //------------------------- Forgot Reset Password ----------------
 
@@ -167,7 +173,7 @@ router.route('/addCategory').post(isAuthenticatedAdmin,categoryUploads.single('c
 //router.route('/logout').post(profileUpload.none(),logout)
 //router.route('/logout').post(profileUpload.none(),logout)
 
-router.route('/view_category').get(isAuthenticatedAdmin,profileUpload.none(),view_category)
+
 
 
 
@@ -521,9 +527,9 @@ router.route('/general_setting').post(isAuthenticatedAdmin,general_settingPost)
 
 //------------ App Slider  Section -------------------------
 
-router.route('/addAppSlider').get(isAuthenticatedAdmin,addAppSlider)
+// router.route('/addAppSlider').get(isAuthenticatedAdmin,addAppSlider)
 
-router.route('/addAppSlider').post(isAuthenticatedAdmin,sliderUploads.array('slider_image'),addAppSliderPost)
+// router.route('/addAppSlider').post(isAuthenticatedAdmin,sliderUploads.array('slider_image'),addAppSliderPost)
 
 router.route('/deleteSlider').post(isAuthenticatedAdmin,deleteSlider)
 

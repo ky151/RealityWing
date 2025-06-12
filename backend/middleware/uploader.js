@@ -1,38 +1,6 @@
 import * as path from 'path';
 import multer from 'multer';
 
-// Define storage for uploaded images
-const imageStorage = multer.diskStorage({  
-  destination: function (req, file, cb) {
-    cb(null, 'public/uploads/'); // Destination folder for uploaded images
-  },
-  filename: function (req, file, cb) {
-    console.log("imageUpload API Hited");
-    const img = file.originalname;
-    const timestamp = Date.now();
-
-    const imageName = `img_${timestamp}${img}`;
-    cb(null, imageName);
-  }
-});
-
-
-const profileStorage = multer.diskStorage({  
-  destination: function (req, file, cb) {
-    cb(null, 'public/images/profiles'); // Destination folder for uploaded images
-  },
-  filename: function (req, file, cb) {
-    console.log("Profile pic uploaded");
-    const img = file.originalname;
-    const timestamp = Date.now();
-    const extname = path.extname(file.originalname);
-
-    const imageName = `profile_${timestamp}${img}`;
-    cb(null, imageName);
-  }
-});
-
-
 
 const categoryStorage = multer.diskStorage({  
   destination: function (req, file, cb) {
@@ -49,6 +17,48 @@ const categoryStorage = multer.diskStorage({
   }
 });
 
+const profileStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/upload/profile'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("Profile pic uploaded");
+    const img = file.originalname;
+    const timestamp = Date.now();
+    const extname = path.extname(file.originalname);
+
+    const imageName = `profile_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
+
+const areaStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/upload/area'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("Area pic uploaded");
+    const img = file.originalname;
+    const timestamp = Date.now();
+    const imageName = `area_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
+
+// Define storage for uploaded images
+const imageStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/uploads/'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("imageUpload API Hited");
+    const img = file.originalname;
+    const timestamp = Date.now();
+
+    const imageName = `img_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
 
 const vehicleStorage = multer.diskStorage({  
   destination: function (req, file, cb) {
@@ -234,18 +244,7 @@ const ticketStorage = multer.diskStorage({
 });
 
 
-const sliderStorage = multer.diskStorage({  
-  destination: function (req, file, cb) {
-    cb(null, 'public/images/sliders'); // Destination folder for uploaded images
-  },
-  filename: function (req, file, cb) {
-    console.log("highlight_  uploaded");
-    const img = file.originalname;
-    const timestamp = Date.now();
-    const imageName = `slider_${timestamp}${img}`;
-    cb(null, imageName);
-  }
-});
+
 
 const userThreadStorage = multer.diskStorage({  
   destination: function (req, file, cb) {
@@ -297,21 +296,20 @@ const countryflagStorage = multer.diskStorage({
 
 
 // Create multer instance for general file uploads
+const categoryUploads = multer({ storage: categoryStorage });
+const profileUpload = multer({ storage: profileStorage });
+const areaUploads  = multer({ storage: areaStorage });
+
+
 const fileUpload = multer({ storage: fileStorage });
 
-const profileUpload = multer({ storage: profileStorage });
-
 const docUploads = multer({ storage: docStorage });
-
-
-const categoryUploads = multer({ storage: categoryStorage });
 
 const vehicleUploads = multer({ storage: vehicleStorage });
  
 const invoiceUploads = multer({ storage: invoiceStorage });
 
 const postUploads = multer({ storage: postStorage });
-
 
 const thumbnailUploads = multer({ storage: thumbnailStorage });
 
@@ -325,12 +323,12 @@ const groupchatUploads  = multer({ storage: groupchatStorage });
 
 const ticketUploads  = multer({ storage: ticketStorage });
 
-const sliderUploads  = multer({ storage: sliderStorage });
-
 const countryUploads  = multer({ storage: countryStorage });
 
 const userThreadUploads  = multer({ storage: userThreadStorage });
 
-export { imageUpload, fileUpload , vehicleUploads, profileUpload , docUploads , categoryUploads , postUploads , 
+export { categoryUploads, profileUpload, areaUploads,
+  
+  imageUpload, fileUpload , vehicleUploads,  docUploads ,  postUploads , 
   thumbnailUploads , folderimgUploads , boardimgUploads ,chatUploads , groupchatUploads , 
-  ticketUploads , sliderUploads , countryUploads, userThreadUploads,invoiceUploads};
+  ticketUploads ,  countryUploads, userThreadUploads,invoiceUploads};

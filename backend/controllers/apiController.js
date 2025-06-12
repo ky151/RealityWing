@@ -8,7 +8,7 @@ moment.tz.setDefault('Asia/Kolkata');
 import paypal from '@paypal/checkout-server-sdk';
 import dotenv from 'dotenv'
 dotenv.config({path:"./config.env"});
-
+  
 const secretKey = process.env.ENCRYPTION_SECRET_KEY;
 
 //======================= Start User Registration ============================== 
@@ -227,7 +227,7 @@ const changePassword = async (req, res, next) => {
 //======================= Start getUserProfile ==============================
 const getUserProfile = async (req, res, next) => {
   const con = await connection();
-  const profileBaseUrl = `http://${process.env.Host}/upload/profile/`;
+  const profileBaseUrl = `${process.env.Host}/upload/profile/`;
 
   try {
     const userID = req.user.user_id;
@@ -258,7 +258,7 @@ const getCategoryList = async (req, res) => {
   const con = await connection();  // Assume connection() establishes DB connection
   
   // Define the base URL for images
-  const profileBaseUrl = `https://${process.env.Host}/upload/category/`;
+  const profileBaseUrl = `${process.env.Host}/upload/category/`;
   
   try {
     // Fetch categories from the database
@@ -301,7 +301,7 @@ const getAreaList = async (req, res) => {
   const con = await connection();  // Assume connection() establishes DB connection
 
   // Define the base URL for images
-  const areaImageBaseUrl = `https://${process.env.Host}/upload/area/`;
+  const areaImageBaseUrl = `${process.env.Host}/upload/area/`;
 
   try {
     // Fetch areas from the database

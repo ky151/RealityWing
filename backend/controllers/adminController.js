@@ -6,7 +6,7 @@ import {sendTokenAdmin} from "../utils/jwtToken.js";
 import {hashPassword, comparePassword , senddocNotificationUser,sendPushNotifications,sendOTPFornewPass, encrypt,decrypt , encrypt64 ,decrypt64, sendSinglePushNotification } from '../middleware/helper.js'
 
 import moment from 'moment-timezone';
-import { contains } from "cheerio";
+import { contains } from "cheerio";  
 // moment.tz.setDefault('Asia/Hong_Kong');
 
 const __dirname = url.fileURLToPath(new URL('.',import.meta.url));
@@ -71,7 +71,7 @@ const adminLogin = async (req, res, next) => {
 //======================= Start adminProfile ==============================
 const adminProfile = async (req, res, next) => {
   const con = await connection();
-  const profileBaseUrl = `http://${process.env.Host}/upload/profile/`;
+  const profileBaseUrl = `${process.env.Host}/upload/profile/`;
 
   try {
     //const adminID = req.admin.admin_id; // Ensure this comes from middleware like `auth`
@@ -145,46 +145,7 @@ const changePassword = async (req, res, next) => {
 };
 //======================= End changePassword ==============================
 
-
-
-
-
-
-
-
-
-//======================= Start User Logout ============================== 
-const logout = async (req, res, next) => {
-  const con = await connection();
-
-  // Get admin ID from req.user (as set by JWT middleware)
-  const adminID = req.admin.admin_id;
-
-  try {
-    await con.beginTransaction();
-
-    // Optional: Clear session fields
-    await con.query("UPDATE tbl_admin SET auth_token='' WHERE id = ?", [adminID]);
-
-    // Clear cookie
-    res.cookie("Admin_token", null, {
-      expires: new Date(Date.now()),
-      httpOnly: true,
-    });
-
-    await con.commit();
-    res.status(200).json({ result: "Admin logout success" });
-
-  } catch (error) {
-    await con.rollback();
-    console.error('Error in Admin Logout API:', error);
-    res.status(500).json({ result: 'Internal Server Error' });
-  } finally {
-    con.release();
-  }
-};
-//======================= End User Logout ============================== 
-
+//======================= Start addCategory ============================
 const addCategory = async (req, res, next) => {
   const con = await connection();
 
@@ -237,14 +198,14 @@ const addCategory = async (req, res, next) => {
     con.release();
   }
 };
+//======================= End addCategory ==============================
 
-
-//======================= Start Fetch Category ============================== 
-const view_category = async (req, res) => {
+//======================= Start viewCategory ============================== 
+const viewCategory = async (req, res) => {
   const con = await connection();  // Assume connection() establishes DB connection
   
   // Define the base URL for images
-  const profileBaseUrl = `https://${process.env.Host}/upload/category/`;
+  const profileBaseUrl = `${process.env.Host}/upload/category/`;
   
   try {
     // Fetch categories from the database
@@ -280,11 +241,340 @@ const view_category = async (req, res) => {
     con.release();
   }
 };
-//======================= End Fetch Category ============================== 
+//======================= End viewCategory ============================== 
+
+//======================= Start deleteCategory ============================
+const deleteCategory = async (req, res, next) => {  
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_categories WHERE id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Category not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Category deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deleteCategory ==============================
+
+//======================= Start addUser ============================
+const addUser = async (req, res, next) => {
+  const con = await connection();
+
+  let {
+    name,
+    email,
+    password,
+    country_code,
+    phone_number,
+    device_key = '',
+    auth_token = '',
+    account_status = 'active',
+    role = 'user'
+  } = req.body;
+
+  const profile_image = req.file ? req.file.filename : null;
+
+  // ✅ Validate required fields
+  if (!name || !email || !password || !country_code || !phone_number || !profile_image) {
+    return res.status(400).json({ success: false, msg: 'All fields are required.' });
+  }
+
+  try {
+    // 🔐 Hash the password before saving
+    password = await hashPassword(password);
+
+    const registration_date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const registration_time = new Date().toTimeString().split(' ')[0]; // HH:MM:SS
+    const created_at = new Date();
+    const updated_at = new Date();
+
+    await con.beginTransaction();
+
+    const sql = `
+      INSERT INTO tbl_users (
+        name, email, password, country_code, phone_number,
+        profile_image_type, device_key, auth_token, account_status, role,
+        registration_date, registration_time, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      name, email, password, country_code, phone_number,
+      profile_image, device_key, auth_token, account_status, role,
+      registration_date, registration_time, created_at, updated_at
+    ];
+
+    await con.query(sql, values);
+    await con.commit();
+
+    res.status(200).json({ success: true, msg: 'User added successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End addUser ==============================
+
+//======================= Start viewUser ============================
+const viewUser = async (req, res) => {
+  const con = await connection(); // Database connection
+
+  // Define base path for profile images
+  const profileBaseUrl = `${process.env.Host}/upload/profile/`;
+
+  try {
+    const [users] = await con.query(`
+      SELECT 
+        user_id, 
+        name, 
+        email, 
+        country_code, 
+        phone_number, 
+        profile_image_type, 
+        account_status, 
+        role, 
+        registration_date, 
+        registration_time, 
+        created_at, 
+        updated_at 
+      FROM tbl_users
+    `);
+
+    if (users.length > 0) {
+      // Add full profile image path if image name exists
+      const usersWithImage = users.map(user => ({
+          user, profile_image_type: user.profile_image_type ? profileBaseUrl + user.profile_image_type : null
+      }));
+
+      res.status(200).json({ success: true, data: usersWithImage });
+    } else {
+      res.status(200).json({ success: false, message: "No users found." });
+    }
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewUser ==============================
+
+//======================= Start deleteUser ============================
+const deleteUser = async (req, res, next) => {  
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_users WHERE user_id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'User not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'User deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deleteUser ==============================
+
+//======================= Start addArea ============================
+const addArea = async (req, res, next) => {
+  const con = await connection();
+
+  const {
+    name,
+    description,
+    lat,
+    log
+  } = req.body;
+
+  // Area image from file upload
+  const area_image = req.file ? req.file.filename : null;
+
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
+
+  // ✅ Input validation
+  if (!name || !description || !lat || !log || !area_image) {
+    return res.status(400).json({ success: false, msg: 'All fields are required.' });
+  }
+
+  try {
+    const create_date = new Date();
+
+    await con.beginTransaction();
+
+    const sql = `
+      INSERT INTO tbl_area (
+        name, description, image, lat, log, create_date
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      name,
+      description,
+      area_image,
+      lat,
+      log,
+      create_date
+    ];
+
+    await con.query(sql, values);
+    await con.commit();
+
+    res.status(200).json({ success: true, msg: 'Area added successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End addArea ==============================
+
+//======================= Start viewArea ============================== 
+const viewArea = async (req, res) => {
+  const con = await connection();
+
+  // ✅ Update this path if area images are stored elsewhere
+  const areaImageBaseUrl = `${process.env.Host}/upload/area/`;
+
+  try {
+    // Fetch area records
+    const [areas] = await con.query(`
+      SELECT 
+        id,
+        name,
+        description,
+        image,
+        lat,
+        log,
+        create_date
+      FROM tbl_area
+    `);
+
+    if (areas.length > 0) {
+      const areasWithImagePath = areas.map(area => ({
+        ...area,
+        image: area.image ? areaImageBaseUrl + area.image : null
+      }));
+
+      res.status(200).json({ success: true, data: areasWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No area records found." });
+    }
+  } catch (error) {
+    console.error("Error fetching areas:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewCategory ============================== 
+
+//======================= Start deleteArea ============================
+const deleteArea = async (req, res, next) => {  
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_area WHERE id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Area not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Area deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error deleting area:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deleteArea ==============================
 
 
 
 
+//======================= Start User Logout ============================== 
+const logout = async (req, res, next) => {
+  const con = await connection();
+
+  // Get admin ID from req.user (as set by JWT middleware)
+  const adminID = req.admin.admin_id;
+
+  try {
+    await con.beginTransaction();
+
+    // Optional: Clear session fields
+    await con.query("UPDATE tbl_admin SET auth_token='' WHERE id = ?", [adminID]);
+
+    // Clear cookie
+    res.cookie("Admin_token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    await con.commit();
+    res.status(200).json({ result: "Admin logout success" });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error in Admin Logout API:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End User Logout ============================== 
 
 
 const home = async (req, res, next) => {
@@ -875,23 +1165,23 @@ const changepass = async (req, res, next) => {
 
 
 
-const addUser = async(req,res,next) => {
-  const con = await connection();
-  const output= req.cookies.rental_msg || '';
-  try {
-      await con.beginTransaction();
+// const addUser = async(req,res,next) => {
+//   const con = await connection();
+//   const output= req.cookies.rental_msg || '';
+//   try {
+//       await con.beginTransaction();
 
-     await con.commit(); 
+//      await con.commit(); 
 
-     res.render('superadmin/addUser',{output:output})
+//      res.render('superadmin/addUser',{output:output})
 
-  } catch (error) {
-     console.error('Error:',error);
-     res.status(500).send('Internal Server Error');
-  } finally {
-      con.release();
-  }
-}
+//   } catch (error) {
+//      console.error('Error:',error);
+//      res.status(500).send('Internal Server Error');
+//   } finally {
+//       con.release();
+//   }
+// }
 
 
 const addUserPost = async (req, res, next) => {
@@ -1164,42 +1454,42 @@ const changeUserStatus = async (req, res, next) => {
 
 
   
-const deleteUser = async (req, res, next) => {  
-  const con = await connection();
+// const deleteUser = async (req, res, next) => {  
+//   const con = await connection();
   
-  const { id } = req.body;
+//   const { id } = req.body;
   
-  try {
-      await con.beginTransaction();
+//   try {
+//       await con.beginTransaction();
   
       
-      const [[userDetails]] = await con.query('SELECT * FROM tbl_user WHERE user_id = ?', [id]);
+//       const [[userDetails]] = await con.query('SELECT * FROM tbl_user WHERE user_id = ?', [id]);
   
-      if(userDetails.email == 'kilvishbirla@gmail.com' || userDetails.email == 'andhera@gmail.com' ){
+//       if(userDetails.email == 'kilvishbirla@gmail.com' || userDetails.email == 'andhera@gmail.com' ){
   
-        return res.status(200).json({ success: false, msg: "Can't Delete: This User ( Under Testing purpose )"});
-      }
+//         return res.status(200).json({ success: false, msg: "Can't Delete: This User ( Under Testing purpose )"});
+//       }
   
   
-        // const deleteSql = `DELETE FROM tbl_user WHERE user_id = ?`;
-        // await con.query(deleteSql, [id]);
+//         // const deleteSql = `DELETE FROM tbl_user WHERE user_id = ?`;
+//         // await con.query(deleteSql, [id]);
 
-        const softDeleteSql = `UPDATE tbl_user SET deleted = 'Yes' WHERE user_id = ?`;
-        await con.query(softDeleteSql, [id]);
+//         const softDeleteSql = `UPDATE tbl_user SET deleted = 'Yes' WHERE user_id = ?`;
+//         await con.query(softDeleteSql, [id]);
   
-        await con.commit();
+//         await con.commit();
   
-        res.json({ success: true, msg: 'User deleted successfully !!' });
-  } catch (error) {
-      await con.rollback();
-      console.error('Error:', error);
-      res.status(500).json({ success: false, msg: 'Internal Server Error' });
+//         res.json({ success: true, msg: 'User deleted successfully !!' });
+//   } catch (error) {
+//       await con.rollback();
+//       console.error('Error:', error);
+//       res.status(500).json({ success: false, msg: 'Internal Server Error' });
   
-      // Handle error, render error message, or redirect to appropriate page
-  } finally {
-      con.release();
-  }
-  };
+//       // Handle error, render error message, or redirect to appropriate page
+//   } finally {
+//       con.release();
+//   }
+//   };
   
 
   const deleteNotification = async (req, res, next) => {  
@@ -7835,37 +8125,27 @@ const graphEarningsPost = async (req, res, next) => {
 
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-export { adminLogin, adminProfile, changePassword, addCategory,
+export { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, addUser, viewUser, deleteUser, addArea, viewArea, deleteArea,
   
-  home, fetchChartData,fetchRideChartData, view_category ,login , logout ,error404 , error500,  index,profilePost,
-  addUser, addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus,deleteUser,user_withdrawal_report,
+  home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
+   addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,
   deposit_to_User, withdrawal_to_User  , 
   addOwner , addUserOwner, viewOwners, changeOwnerStatus, deleteOwner , Owner_withdrawal_report, 
   deposit_to_Owner, withdrawal_to_Owner , OwnerWithdrawRequest, changeOwnerWithdrawStatus,UserWithdrawRequest,
   changeUserWithdrawStatus,changeOwnerDocStatus,
-
   pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings,cancelBookingStatus,
-
-
   user_document_management,Owner_document_management,vehicleCategory,vehicleCategoryPost,
   vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
-
-
   vehicleModelPost, updateModels, deleteMake, changeMakeStatus ,checkModel , checkMake , vehicleTypesPost, 
   vehicleFeaturesPost , checkType, UpdatevehicleTypes , changeTypeStatus , deleteVehicleType , 
   UpdateFeature ,changeFeatureStatus, deleteFeature , checkFeature , updateUser ,
-
-
   adduserAmount , adduserAmountPost , addownerAmount,addownerAmountPost ,changeLicenseStatus ,
    senddocNotification , updateOwner , senddocNotificationOwner ,promotional_plans ,promotional_plansPost ,
    discount_coupons, discount_couponsPost ,checkCoupanCode ,  changePlanStatus ,deletePlan, 
    changeCouponStatus, deleteCoupon , 
    changeVehicleStatus,deleteVehicle,
-
-
    addSubadmin , addCountry ,multi_currency ,general_setting ,addAppSlider ,notifications , 
    userRatings, ownerRatings,updateUserRating ,updateOwnerRating , affiliation , referralAmounts ,deposits_fee, users_faqs , owners_faqs,
-
    users_privacy_policy, owners_privacy_policy ,   users_terms_condition ,owners_terms_condition,
    inquiry_contacts,about_us,queries ,general_settingPost,addCountryPost , checkCountry,checkcountryCode,
    checkcurrencyName ,changeCountryStatus , deleteCountry ,addAppSliderPost , deleteSlider , 
@@ -7874,13 +8154,11 @@ export { adminLogin, adminProfile, changePassword, addCategory,
    deleteTerms,addTermsCondition ,deleteCancellationPolicy ,addCancellationPolicy ,owners_cancellation_policy ,users_cancellation_policy ,
    QueriesPost , sendMailtoUser, AftersendemailQuriesReload ,updateUserPic,updateAdmin ,changepass , 
    addAboutus,deleteAboutus ,showNotifications,
-
    ForgotPassword,sendOTP,verifyOTP,resetpassword ,inquiry_contactsPost , 
    checksubadminemail,checksubadminphonenumber ,checksubadminusername , 
    viewSubadmins ,updateSubadmin,changeSubadminStatus,deleteSubadmin , kilstream,deleteNotification,
    post_pending_bookings,post_confirm_bookings,post_ongoing_bookings,post_complete_bookings,post_cancel_bookings,
    postOwnerRatings,postUserRatings,
-
    graphUser,graphUserPost,graphOwner,graphOwnerPost,graphAllVehicle,UserAccountRequest, 
    changeUserAccountStatus,graphAllVehiclePost,graphBookings,graphBookingsPost,graphEarnings,graphEarningsPost
 } 
