@@ -1,6 +1,7 @@
 import express from "express";
 
-import { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, viewUser, deleteUser, addArea, viewArea, deleteArea, 
+import { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant, viewTenant,
+  deleteTenant, addProperties, 
   
   home, error404, error500,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
@@ -166,41 +167,25 @@ router.route('/deleteUser').post(isAuthenticatedAdmin,profileUpload.none(),delet
 router.route('/addArea').post(isAuthenticatedAdmin,areaUploads.single('area_image'),addArea)
 router.route('/viewArea').get(isAuthenticatedAdmin,profileUpload.none(),viewArea)
 router.route('/deleteArea').post(isAuthenticatedAdmin,profileUpload.none(),deleteArea)
+router.route('/addTenant').post(isAuthenticatedAdmin,profileUpload.none(),addTenant)
+router.route('/viewTenant').get(isAuthenticatedAdmin,profileUpload.none(),viewTenant)
+router.route('/deleteTenant').post(isAuthenticatedAdmin,profileUpload.none(),deleteTenant)
+router.route('/addProperties').post(isAuthenticatedAdmin,profileUpload.none(),addProperties)
 
 //------------------------- Forgot Reset Password ----------------
-
 //router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
 //router.route('/logout').post(profileUpload.none(),logout)
 //router.route('/logout').post(profileUpload.none(),logout)
 
-
-
-
-
 //------------------------- Forgot Reset Password ----------------
-
 router.route('/ForgotPassword').get(ForgotPassword)
-
 router.route('/sendOTP').post(sendOTP)
-
 router.route('/verify-otp').post(verifyOTP)
- 
 router.route('/reset-password').post(resetpassword)
 
-
-
-
-
-
 router.route('/updateUserPic').post(isAuthenticatedAdmin,profileUpload.single('image'),updateUserPic)
-
-
 router.route('/updateAdmin').post( isAuthenticatedAdmin,profileUpload.single('profile_image'),updateAdmin)
-
 router.route('/changepass').post( isAuthenticatedAdmin,profileUpload.single('profile_image'),changepass)
-
-
-
 
 //--------------- Admin section End -------------------------------
 
@@ -335,202 +320,77 @@ router.route('/cancelled_bookings').get(isAuthenticatedAdmin,cancelled_bookings)
 
   //------------------- Vehicle Make models  Section ------------------  
 router.route('/vehicleCategory').get(isAuthenticatedAdmin,vehicleCategory)
-
 router.route('/checkMake').post(isAuthenticatedAdmin, checkMake)
-
 router.route('/vehicleCategory').post(isAuthenticatedAdmin,categoryUploads.single('make_image'),vehicleCategoryPost)
-
 router.route('/vehicleModel').get(isAuthenticatedAdmin,vehicleModel)
-
-
-
-
 router.route('/vehicleModel').post(isAuthenticatedAdmin,vehicleModelPost)
-
 router.route('/updateModels').post(isAuthenticatedAdmin,updateModels)
-
 router.route('/deleteMake').post(isAuthenticatedAdmin,deleteMake)
-
 router.route('/changeMakeStatus').post(isAuthenticatedAdmin,changeMakeStatus)
-
 router.route('/checkModel').post(isAuthenticatedAdmin, checkModel)
 
-
-
-
-
 //------------ Vechicle types section -------------------
-
 router.route('/vehicleTypes').get(isAuthenticatedAdmin,vehicleTypes)
-
 router.route('/vehicleTypes').post(isAuthenticatedAdmin,categoryUploads.single('type_image'),vehicleTypesPost)
-
 router.route('/UpdatevehicleTypes').post(isAuthenticatedAdmin,categoryUploads.single('type_image'),UpdatevehicleTypes)
-
-
 router.route('/changeTypeStatus').post(isAuthenticatedAdmin,changeTypeStatus)
-
 router.route('/deleteVehicleType').post(isAuthenticatedAdmin,deleteVehicleType)
-
-
-
 router.route('/checkType').post(isAuthenticatedAdmin,checkType)
-
-
-
-
-
-
-
-
-
 router.route('/vehicleFeatures').get(isAuthenticatedAdmin,vehicleFeatures)
-
-
 router.route('/checkFeature').post(isAuthenticatedAdmin,checkFeature)
-
 router.route('/vehicleFeatures').post(isAuthenticatedAdmin,categoryUploads.single('feature_image'),vehicleFeaturesPost)
-
 router.route('/UpdateFeature').post(isAuthenticatedAdmin,categoryUploads.single('type_image'),UpdateFeature)
-
-
 router.route('/changeFeatureStatus').post(isAuthenticatedAdmin,changeFeatureStatus)
-
 router.route('/deleteFeature').post(isAuthenticatedAdmin,deleteFeature)
 
-
-
 //====================== Vehicle Section ======================================= 
-
-
-
-
-
 router.route('/viewVehicles').get(isAuthenticatedAdmin,viewVehicles)
-
-
 router.route('/changeVehicleStatus').post(isAuthenticatedAdmin,changeVehicleStatus)
-
 router.route('/deleteVehicle').post(isAuthenticatedAdmin,deleteVehicle)
 
-
-
-
-
 //============== Promotion Section =============== 
-
 router.route('/promotional_plans').get(isAuthenticatedAdmin,promotional_plans)
-
 router.route('/promotional_plans').post(isAuthenticatedAdmin,promotional_plansPost)
-
 router.route('/changePlanStatus').post(isAuthenticatedAdmin,changePlanStatus)
-
 router.route('/deletePlan').post(isAuthenticatedAdmin,deletePlan)
 
-
-
-
-
 //================= Coupon Section ============================
-
 router.route('/discount_coupons').get(isAuthenticatedAdmin,discount_coupons)
-
 router.route('/discount_coupons').post(isAuthenticatedAdmin,discount_couponsPost)
-
 router.route('/checkCoupanCode').post(isAuthenticatedAdmin,checkCoupanCode)
-
-
 router.route('/changeCouponStatus').post(isAuthenticatedAdmin,changeCouponStatus)
-
 router.route('/deleteCoupon').post(isAuthenticatedAdmin,deleteCoupon)
-
-
-
-
-
-
-
 
 //====================   Subadmin Section ============================ 
 
 router.route('/addSubadmin').get(isAuthenticatedAdmin,addSubadmin)
-
 router.route('/addSubadmin').post(isAuthenticatedAdmin,addSubadmin)
-
 router.route('/checksubadminemail').post(isAuthenticatedAdmin,checksubadminemail)
-
 router.route('/checksubadminphonenumber').post(isAuthenticatedAdmin,checksubadminphonenumber)
-
-
 router.route('/checksubadminusername').post(isAuthenticatedAdmin,checksubadminusername)
-
-
-
-
 router.route('/viewSubadmins').get(isAuthenticatedAdmin,viewSubadmins)
-
 router.route('/updateSubadmin').post(isAuthenticatedAdmin,updateSubadmin)
-
 router.route('/changeSubadminStatus').post(isAuthenticatedAdmin,changeSubadminStatus)
-
 router.route('/deleteSubadmin').post(isAuthenticatedAdmin,deleteSubadmin)
 
-
-
-
-
-
 //----------------- Country Section ------------------------
-
 router.route('/addCountry').get(isAuthenticatedAdmin,addCountry)
-
 router.route('/addCountry').post(isAuthenticatedAdmin,countryUploads.single('country_image'),addCountryPost)
-
-
-
 router.route('/checkCountry').post(isAuthenticatedAdmin,checkCountry)
-
 router.route('/checkcountryCode').post(isAuthenticatedAdmin,checkcountryCode)
-
 router.route('/checkcurrencyName').post(isAuthenticatedAdmin,checkcurrencyName)
-
-
 router.route('/updateCountryDetails').post(isAuthenticatedAdmin,countryUploads.single('country_image'),updateCountryDetails)
-
-
-
 router.route('/changeCountryStatus').post(isAuthenticatedAdmin,changeCountryStatus)
-
 router.route('/deleteCountry').post(isAuthenticatedAdmin,deleteCountry)
-
 router.route('/multi_currency').get(isAuthenticatedAdmin,multi_currency)
 
-
-
-
-
-
-
-
 //------------ Importaant Credencials Setting  Section -------------------------
-
-
 router.route('/general_setting').get(isAuthenticatedAdmin,general_setting)
-
 router.route('/general_setting').post(isAuthenticatedAdmin,general_settingPost)
 
-
-
-
-
-
-
 //------------ App Slider  Section -------------------------
-
 // router.route('/addAppSlider').get(isAuthenticatedAdmin,addAppSlider)
-
 // router.route('/addAppSlider').post(isAuthenticatedAdmin,sliderUploads.array('slider_image'),addAppSliderPost)
-
 router.route('/deleteSlider').post(isAuthenticatedAdmin,deleteSlider)
 
 

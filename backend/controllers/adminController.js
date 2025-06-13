@@ -508,7 +508,7 @@ const viewArea = async (req, res) => {
     con.release();
   }
 };
-//======================= End viewCategory ============================== 
+//======================= End viewArea ============================== 
 
 //======================= Start deleteArea ============================
 const deleteArea = async (req, res, next) => {  
@@ -541,7 +541,166 @@ const deleteArea = async (req, res, next) => {
 };
 //======================= End deleteArea ==============================
 
+//======================= Start addTenant ============================
+const addTenant = async (req, res, next) => {
+  const con = await connection();
 
+  const { name } = req.body;
+
+  // ✅ Validate required field
+  if (!name) {
+    return res.status(400).json({ success: false, msg: 'Name is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const sql = `INSERT INTO tbl_tenant (name) VALUES (?)`;
+    await con.query(sql, [name]);
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Tenant added successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error adding tenant:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End addTenant ==============================
+
+//======================= Start viewTenant ============================== 
+const viewTenant = async (req, res) => {
+  const con = await connection();
+
+  try {
+    const [tenants] = await con.query(`
+      SELECT 
+        id,
+        name,
+        status,
+        created_at,
+        updated_at
+      FROM tbl_tenant
+    `);
+
+    if (tenants.length > 0) {
+      res.status(200).json({ success: true, data: tenants });
+    } else {
+      res.status(200).json({ success: false, message: "No tenant records found." });
+    }
+  } catch (error) {
+    console.error("Error fetching tenants:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewTenant ============================== 
+
+//======================= Start deleteTenant ============================
+const deleteTenant = async (req, res, next) => {  
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_tenant WHERE id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Tenant not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Tenant deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error deleting tenant:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deleteTenant ==============================
+
+//======================= Start addProperties ============================
+const addProperties = async (req, res) => {
+  const con = await connection();
+
+  const {
+    owner_name,
+    owner_contact,
+    category_id,
+    purpose,
+    area_id,
+    address,
+    location,
+    location_lat,
+    location_long,
+    number_of_rooms,
+    square_footage,
+    floor,
+    furnished,
+    amenities,
+    tenant_id,
+    availability_date,
+    additional_detail,
+    price,
+    status
+  } = req.body;
+
+  const bathroom_image = req.file ? req.file.filename : null;
+
+  // ✅ Required field validation
+  if (
+    !owner_name || !owner_contact || !category_id || !purpose || !area_id || !address ||
+    !location || !location_lat || !location_long || !number_of_rooms || !square_footage ||
+    !floor || !furnished || !tenant_id || !availability_date || !price
+  ) {
+    return res.status(400).json({ success: false, msg: 'All required fields must be provided.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const sql = `
+      INSERT INTO tbl_properties (
+        owner_name, owner_contact, category_id, purpose, area_id, address,
+        location, location_lat, location_long, number_of_rooms, square_footage,
+        bathroom_image, floor, furnished, amenities, tenant_id, availability_date,
+        additional_detail, price, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      owner_name, owner_contact, category_id, purpose, area_id, address,
+      location, location_lat, location_long, number_of_rooms, square_footage,
+      bathroom_image, floor, furnished, amenities || null, tenant_id,
+      availability_date, additional_detail || null, price, status || 'active'
+    ];
+
+    await con.query(sql, values);
+    await con.commit();
+
+    res.status(200).json({ success: true, msg: 'Property added successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error adding property:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End addProperties ==============================
 
 
 //======================= Start User Logout ============================== 
@@ -8125,7 +8284,8 @@ const graphEarningsPost = async (req, res, next) => {
 
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-export { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, addUser, viewUser, deleteUser, addArea, viewArea, deleteArea,
+export { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, addUser, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant,
+  viewTenant, deleteTenant, addProperties,
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
    addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,
