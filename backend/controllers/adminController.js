@@ -705,6 +705,7 @@ const addProperties = async (req, res) => {
 //======================= Start viewProperties ==============================
 const viewProperties = async (req, res) => {
   const con = await connection();
+  const imageBaseUrl = `${process.env.Host}/upload/property/`;
 
   try {
     const [properties] = await con.query(`
@@ -742,8 +743,18 @@ const viewProperties = async (req, res) => {
       WHERE 1
     `);
 
-    if (properties.length > 0) {
-      res.status(200).json({ success: true, data: properties });
+    // Map image path for each record
+    const updatedProperties = properties.map(property => {
+      return {
+        ...property,
+        bathroom_image: property.bathroom_image
+          ? imageBaseUrl + property.bathroom_image
+          : null
+      };
+    });
+
+    if (updatedProperties.length > 0) {
+      res.status(200).json({ success: true, data: updatedProperties });
     } else {
       res.status(200).json({ success: false, message: "No property records found." });
     }
@@ -755,6 +766,7 @@ const viewProperties = async (req, res) => {
   }
 };
 //======================= End viewProperties ==============================
+
 
 //======================= Start deleteProperties ==============================
 const deleteProperties = async (req, res, next) => {  
