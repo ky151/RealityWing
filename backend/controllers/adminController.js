@@ -653,8 +653,7 @@ const addProperties = async (req, res) => {
     tenant_id,
     availability_date,
     additional_detail,
-    price,
-    status
+    price
   } = req.body;
 
   const bathroom_image = req.file ? req.file.filename : null;
@@ -676,21 +675,22 @@ const addProperties = async (req, res) => {
         owner_name, owner_contact, category_id, purpose, area_id, address,
         location, location_lat, location_long, number_of_rooms, square_footage,
         bathroom_image, floor, furnished, amenities, tenant_id, availability_date,
-        additional_detail, price, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        additional_detail, price
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       owner_name, owner_contact, category_id, purpose, area_id, address,
       location, location_lat, location_long, number_of_rooms, square_footage,
       bathroom_image, floor, furnished, amenities || null, tenant_id,
-      availability_date, additional_detail || null, price, status || 'active'
+      availability_date, additional_detail || null, price
     ];
 
-    await con.query(sql, values);
+    //await con.query(sql, values);
+    const [result] = await con.query(sql, values); // Get insertId from result
     await con.commit();
 
-    res.status(200).json({ success: true, msg: 'Property added successfully!' });
+    res.status(200).json({ success: true, msg: 'Property added successfully!', property_id: result.insertId });
 
   } catch (error) {
     await con.rollback();
@@ -702,6 +702,90 @@ const addProperties = async (req, res) => {
 };
 //======================= End addProperties ==============================
 
+//======================= Start viewProperties ==============================
+const viewProperties = async (req, res) => {
+  const con = await connection();
+
+  try {
+    const [properties] = await con.query(`
+      SELECT 
+        p.id, 
+        p.owner_name, 
+        p.owner_contact, 
+        p.category_id,
+        c.category_name,
+        p.purpose, 
+        p.area_id,
+        a.name AS area_name,
+        p.address, 
+        p.location, 
+        p.location_lat, 
+        p.location_long, 
+        p.number_of_rooms, 
+        p.square_footage, 
+        p.bathroom_image, 
+        p.floor, 
+        p.furnished, 
+        p.amenities, 
+        p.tenant_id,
+        t.name AS tenant_name,
+        p.availability_date, 
+        p.additional_detail, 
+        p.price, 
+        p.status, 
+        p.created_at, 
+        p.updated_at
+      FROM tbl_properties p
+      LEFT JOIN tbl_categories c ON p.category_id = c.id
+      LEFT JOIN tbl_area a ON p.area_id = a.id
+      LEFT JOIN tbl_tenant t ON p.tenant_id = t.id
+      WHERE 1
+    `);
+
+    if (properties.length > 0) {
+      res.status(200).json({ success: true, data: properties });
+    } else {
+      res.status(200).json({ success: false, message: "No property records found." });
+    }
+  } catch (error) {
+    console.error("Error fetching properties with relations:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewProperties ==============================
+
+//======================= Start deleteProperties ==============================
+const deleteProperties = async (req, res, next) => {  
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_properties WHERE id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Property not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Property deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error deleting property:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deleteProperties ==============================
 
 //======================= Start User Logout ============================== 
 const logout = async (req, res, next) => {
@@ -8279,13 +8363,13 @@ const graphEarningsPost = async (req, res, next) => {
   } finally {
     con.release();
   }
-};
+};  
 
 
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 export { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, addUser, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant,
-  viewTenant, deleteTenant, addProperties,
+  viewTenant, deleteTenant, addProperties, viewProperties, deleteProperties,
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
    addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,

@@ -1,7 +1,7 @@
 import express from "express";
 
 import { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant, viewTenant,
-  deleteTenant, addProperties, 
+  deleteTenant, addProperties, viewProperties, deleteProperties,
   
   home, error404, error500,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
@@ -144,7 +144,7 @@ import { isAuthenticatedAdmin } from "../middleware/Adminauth.js";
 
 import upload from '../middleware/upload.js';
 
-import { categoryUploads, profileUpload, areaUploads, docUploads, countryUploads , fileUpload } from '../middleware/uploader.js';
+import { categoryUploads, profileUpload, areaUploads, bathroomUploads, docUploads, countryUploads , fileUpload } from '../middleware/uploader.js';
 
 const router = express.Router();
 
@@ -170,7 +170,9 @@ router.route('/deleteArea').post(isAuthenticatedAdmin,profileUpload.none(),delet
 router.route('/addTenant').post(isAuthenticatedAdmin,profileUpload.none(),addTenant)
 router.route('/viewTenant').get(isAuthenticatedAdmin,profileUpload.none(),viewTenant)
 router.route('/deleteTenant').post(isAuthenticatedAdmin,profileUpload.none(),deleteTenant)
-router.route('/addProperties').post(isAuthenticatedAdmin,profileUpload.none(),addProperties)
+router.route('/addProperties').post(isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),addProperties)
+router.route('/viewProperties').get(isAuthenticatedAdmin,profileUpload.none(),viewProperties)
+router.route('/deleteProperties').post(isAuthenticatedAdmin,profileUpload.none(),deleteProperties)
 
 //------------------------- Forgot Reset Password ----------------
 //router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
