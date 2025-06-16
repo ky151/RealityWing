@@ -1,6 +1,7 @@
 import http from 'http';
 import https from 'https';
 import express from 'express';
+import cors from 'cors';
 import * as url from 'url';
 import * as path from 'path';
 import fs from 'fs';
@@ -35,7 +36,8 @@ app.use(requestIp.mw());
 // Serve Flutter build files
 app.use(express.static(path.join(__dirname, 'public/flutter')));
 
-
+// Enable CORS for all requests (basic setup)
+app.use(cors());
 
 app.use('/api_admin',AdminRouter);
 app.use('/api',ApiRouter);
