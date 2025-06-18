@@ -39,11 +39,11 @@ app.use(express.static(path.join(__dirname, 'public/flutter')));
 // Enable CORS for all requests (basic setup)
 app.use(cors());
 
-app.use(cors({
+/*app.use(cors({
   origin: ['http://localhost:3001', 'https://realitywing.com/'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
-}));
+}));*/
 
 app.use('/api_admin',AdminRouter);
 app.use('/api',ApiRouter);
