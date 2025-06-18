@@ -36,14 +36,16 @@ app.use(requestIp.mw());
 // Serve Flutter build files
 app.use(express.static(path.join(__dirname, 'public/flutter')));
 
-// Enable CORS for all requests (basic setup)
-app.use(cors());
-
-/*app.use(cors({
-  origin: ['http://localhost:3001', 'https://realitywing.com/'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
-}));*/
+app.use(cors({
+  origin: [
+    'http://localhost:3000',         // local React (optional, for dev)
+    'http://localhost:3002',         // local admin panel (optional)
+    'http://46.202.166.22:3000',        // user frontend (server IP)
+    'http://46.202.166.22:3002',        // admin panel (server IP)
+    'https://realitywing.com'        // live domain
+  ],
+  credentials: true  // only if you use cookies/auth sessions
+}));
 
 app.use('/api_admin',AdminRouter);
 app.use('/api',ApiRouter);
