@@ -838,37 +838,37 @@ const home = async (req, res, next) => {
   try {
       await con.beginTransaction();
 
-      // Queries for different counts and earnings
-      const [[{ user_ids }]] = await con.query("SELECT COUNT(*) AS user_ids FROM tbl_user WHERE user_type='User'");
-      const [[{ Owner_ids }]] = await con.query("SELECT COUNT(*) AS Owner_ids FROM tbl_user WHERE user_type='Owner'");
-      const [[{ Vehicle_ids }]] = await con.query("SELECT COUNT(*) AS Vehicle_ids FROM tbl_vehicles");
-      const [[{ Pendings }]] = await con.query("SELECT COUNT(*) AS Pendings FROM tbl_bookings WHERE booking_status='Pending'");
-      const [[{ On_Goings }]] = await con.query("SELECT COUNT(*) AS On_Goings FROM tbl_bookings WHERE booking_status IN ('On_Going','UserCheck_In','UserCheck_Out','OwnerCheck_In','OwnerCheck_Out')");
-      const [[{ Cancelleds }]] = await con.query("SELECT COUNT(*) AS Cancelleds FROM tbl_bookings WHERE booking_status='Cancelled'");
-      const [[{ Completeds }]] = await con.query("SELECT COUNT(*) AS Completeds FROM tbl_bookings WHERE booking_status='Completed'");
-      const [[{ booking_ids }]] = await con.query("SELECT COUNT(*) AS booking_ids FROM tbl_bookings");
-      const [[{ total_charge }]] = await con.query("SELECT SUM(total_charge) AS total_charge FROM tbl_bookings WHERE booking_status='Completed'");
-      const [[{ admin_com }]] = await con.query("SELECT SUM(vat_charge) AS admin_com FROM tbl_bookings WHERE booking_status='Completed'");
-      const [[{ Confirms }]] = await con.query("SELECT COUNT(*) AS Confirms FROM tbl_bookings WHERE booking_status IN ('Confirmed')");
+      // // Queries for different counts and earnings
+      // const [[{ user_ids }]] = await con.query("SELECT COUNT(*) AS user_ids FROM tbl_user WHERE user_type='User'");
+      // const [[{ Owner_ids }]] = await con.query("SELECT COUNT(*) AS Owner_ids FROM tbl_user WHERE user_type='Owner'");
+      // const [[{ Vehicle_ids }]] = await con.query("SELECT COUNT(*) AS Vehicle_ids FROM tbl_vehicles");
+      // const [[{ Pendings }]] = await con.query("SELECT COUNT(*) AS Pendings FROM tbl_bookings WHERE booking_status='Pending'");
+      // const [[{ On_Goings }]] = await con.query("SELECT COUNT(*) AS On_Goings FROM tbl_bookings WHERE booking_status IN ('On_Going','UserCheck_In','UserCheck_Out','OwnerCheck_In','OwnerCheck_Out')");
+      // const [[{ Cancelleds }]] = await con.query("SELECT COUNT(*) AS Cancelleds FROM tbl_bookings WHERE booking_status='Cancelled'");
+      // const [[{ Completeds }]] = await con.query("SELECT COUNT(*) AS Completeds FROM tbl_bookings WHERE booking_status='Completed'");
+      // const [[{ booking_ids }]] = await con.query("SELECT COUNT(*) AS booking_ids FROM tbl_bookings");
+      // const [[{ total_charge }]] = await con.query("SELECT SUM(total_charge) AS total_charge FROM tbl_bookings WHERE booking_status='Completed'");
+      // const [[{ admin_com }]] = await con.query("SELECT SUM(vat_charge) AS admin_com FROM tbl_bookings WHERE booking_status='Completed'");
+      // const [[{ Confirms }]] = await con.query("SELECT COUNT(*) AS Confirms FROM tbl_bookings WHERE booking_status IN ('Confirmed')");
       
       
-      // Create indexDetails object
-      const indexDetails = {
-          user_ids,
-          Owner_ids,
-          Vehicle_ids,
-          Pendings,
-          On_Goings,
-          Confirms,
-          Cancelleds,
-          Completeds,
-          booking_ids,
-          total_charge: total_charge || 0, // Handle null in case no completed bookings
-          admin_com: admin_com || 0       // Handle null in case no completed bookings
-      };
+      // // Create indexDetails object
+      // const indexDetails = {
+      //     user_ids,
+      //     Owner_ids,
+      //     Vehicle_ids,
+      //     Pendings,
+      //     On_Goings,
+      //     Confirms,
+      //     Cancelleds,
+      //     Completeds,
+      //     booking_ids,
+      //     total_charge: total_charge || 0, // Handle null in case no completed bookings
+      //     admin_com: admin_com || 0       // Handle null in case no completed bookings
+      // };
 
       // Render the view
-      res.render('superadmin/index', { output, indexDetails });
+      res.render('superadmin/index', { output });
       await con.commit();
   } catch (error) {
       await con.rollback();

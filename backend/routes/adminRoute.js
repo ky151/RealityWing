@@ -148,10 +148,10 @@ import { categoryUploads, profileUpload, areaUploads, bathroomUploads, docUpload
 
 const router = express.Router();
 
-router.route('/').get(isAuthenticatedAdmin,home)
-router.route('/index').get(isAuthenticatedAdmin,index)
-router.route('/fetchChartData').get(isAuthenticatedAdmin,fetchChartData)
-router.route('/fetchRideChartData').get(isAuthenticatedAdmin, fetchRideChartData)
+// router.route('/').get(home)
+// router.route('/index').get(isAuthenticatedAdmin,index)
+// router.route('/fetchChartData').get(isAuthenticatedAdmin,fetchChartData)
+// router.route('/fetchRideChartData').get(isAuthenticatedAdmin, fetchRideChartData)
 
 //------------------- Admin Start -------------------------------
 

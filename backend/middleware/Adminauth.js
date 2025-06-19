@@ -2,13 +2,17 @@ import jwt from 'jsonwebtoken'
 import connection  from '../config.js'
 
 const isAuthenticatedAdmin = async (req, res, next) => {
-  const { Admin_token } = req.cookies;
-
-  if (!Admin_token) {
-    return res.status(401).json({ result: 'Access denied. No token provided.' });
+  //const { Admin_token } = req.cookies;
+    
+  if (req.header('Authorization')) {
+    var Admin_token = req.header('Authorization').replace('Bearer ', '');
   }
 
   const con = await connection();
+
+  if (!Admin_token) {
+    return res.status(200).json({ result: 'Access denied. No token provided.' });
+  }
 
   try {
     const decodedData = jwt.verify(Admin_token, process.env.JWT_SECRET);
