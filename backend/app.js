@@ -39,9 +39,13 @@ app.use(express.static(path.join(__dirname, 'public/flutter')));
 app.use(cors({
   origin: [
     'http://localhost:3000',         // local React (optional, for dev)
+	'http://localhost:3001',         // local React (optional, for dev)
     'http://localhost:3002',         // local admin panel (optional)
     'http://46.202.166.22:3000',        // user frontend (server IP)
+	'http://46.202.166.22:3001',        // user backend (server IP)
     'http://46.202.166.22:3002',        // admin panel (server IP)
+	'http://realitywing.com:3002',        // live domain
+	'http://realitywing.com',        // live domain
     'https://realitywing.com'        // live domain
   ],
   credentials: true  // only if you use cookies/auth sessions
