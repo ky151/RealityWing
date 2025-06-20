@@ -66,22 +66,27 @@ const sliderSettings = {
   dots: false,
   infinite: false,
   speed: 500,
-  slidesToShow: 1,
-  slidesToScroll: 1,
-  responsive: [
-    {
-      breakpoint: 640,
-      settings: {
-        slidesToShow: 1,
+  slidesToShow: 4,
+    slidesToScroll: 1,
+    
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: { slidesToShow: 4 },
       },
-    },
-    {
-      breakpoint: 768,
-      settings: {
-        slidesToShow: 1,
+       {
+        breakpoint: 1350,
+        settings: { slidesToShow: 4 },
       },
-    },
-  ],
+      {
+        breakpoint: 768,
+        settings: { slidesToShow: 1 },
+      },
+      {
+        breakpoint: 480,
+        settings: { slidesToShow: 1 },
+      },
+    ],
 };
 
 const PopularProperties = () => {
@@ -94,8 +99,7 @@ const PopularProperties = () => {
         </a>
       </div>
 
-      {/* Mobile & Tablet - Slider */}
-      <div className="lg:hidden">
+      <div >
         <Slider {...sliderSettings}>
           {properties.map((prop, index) => (
             <div key={index} >
@@ -103,13 +107,6 @@ const PopularProperties = () => {
             </div>
           ))}
         </Slider>
-      </div>
-
-      {/* Desktop - Grid */}
-      <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-        {properties.map((prop, index) => (
-          <PropertyCard key={index} {...prop} />
-        ))}
       </div>
     </section>
   );
