@@ -58,6 +58,34 @@ const bathroomStorage = multer.diskStorage({
   }
 });
 
+
+const multiplepropertyStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/upload/property'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("Property pic uploaded");
+    const img = file.originalname;
+    const timestamp = Date.now();
+    const imageName = `propertyimg_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
+
+const blogUploadsStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/upload/blog'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("Blog pic uploaded");
+    const img = file.originalname;
+    const timestamp = Date.now();
+    const imageName = `blog_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
+
+
 // Define storage for uploaded images
 const imageStorage = multer.diskStorage({  
   destination: function (req, file, cb) {
@@ -319,6 +347,9 @@ const categoryUploads = multer({ storage: categoryStorage });
 const profileUpload = multer({ storage: profileStorage });
 const areaUploads  = multer({ storage: areaStorage });
 const bathroomUploads  = multer({ storage: bathroomStorage });
+const multiplepropertyUploads  = multer({ storage: multiplepropertyStorage });
+const blogUploads  = multer({ storage: blogUploadsStorage });
+
 
 
 const fileUpload = multer({ storage: fileStorage });
@@ -347,7 +378,7 @@ const countryUploads  = multer({ storage: countryStorage });
 
 const userThreadUploads  = multer({ storage: userThreadStorage });
 
-export { categoryUploads, profileUpload, areaUploads, bathroomUploads,
+export { categoryUploads, profileUpload, areaUploads, bathroomUploads, multiplepropertyUploads, blogUploads, 
   
   imageUpload, fileUpload , vehicleUploads,  docUploads ,  postUploads , 
   thumbnailUploads , folderimgUploads , boardimgUploads ,chatUploads , groupchatUploads , 

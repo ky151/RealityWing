@@ -13,8 +13,6 @@ const __dirname = url.fileURLToPath(new URL('.',import.meta.url));
 
 import slugify from 'slugify';
 
-
-
 //=========================== Start Web  Services =============================
 
 //======================= Start Admin Login ============================== 
@@ -600,6 +598,57 @@ const viewTenant = async (req, res) => {
 };
 //======================= End viewTenant ============================== 
 
+//======================= Start editTenant ============================
+const editTenant = async (req, res, next) => {
+  const con = await connection();
+  const { id, name, status } = req.body;
+
+  // ✅ Validate required field
+  if (!id) {
+    return res.status(400).json({ success: false, msg: 'Tenant ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Prepare fields dynamically
+    const fields = [];
+    const values = [];
+
+    if (name) {
+      fields.push('name = ?');
+      values.push(name);
+    }
+
+    if (status) {
+      fields.push('status = ?');
+      values.push(status);
+    }
+
+    fields.push('updated_at = CURRENT_TIMESTAMP'); // always update this
+    const sql = `UPDATE tbl_tenant SET ${fields.join(', ')} WHERE id = ?`;
+    values.push(id); // add ID for WHERE clause
+
+    const [result] = await con.query(sql, values);
+
+    if (result.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Tenant not found or not updated.' });
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Tenant updated successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error editing tenant:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End editTenant ============================== 
+
 //======================= Start deleteTenant ============================
 const deleteTenant = async (req, res, next) => {  
   const con = await connection();
@@ -702,6 +751,42 @@ const addProperties = async (req, res) => {
 };
 //======================= End addProperties ==============================
 
+//======================= Start uploadPropertyImages ============================
+const uploadPropertyImages = async (req, res) => {
+  const con = await connection();
+
+  const { property_id } = req.body;
+  const files = req.files; // array of uploaded files
+
+  if (!property_id || !files || files.length === 0) {
+    return res.status(400).json({ success: false, msg: 'Property ID and images are required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const insertValues = files.map(file => [property_id, file.filename]);
+
+    const sql = `
+      INSERT INTO tbl_properties_images (property_id, property_image)
+      VALUES ?
+    `;
+
+    await con.query(sql, [insertValues]);
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Images uploaded successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error uploading property images:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End uploadPropertyImages ============================
+
 //======================= Start viewProperties ==============================
 const viewProperties = async (req, res) => {
   const con = await connection();
@@ -735,38 +820,47 @@ const viewProperties = async (req, res) => {
         p.price, 
         p.status, 
         p.created_at, 
-        p.updated_at
+        p.updated_at,
+
+        -- 👇 Fetch multiple property images as comma-separated string
+        GROUP_CONCAT(pi.property_image) AS property_images
+
       FROM tbl_properties p
       LEFT JOIN tbl_categories c ON p.category_id = c.id
       LEFT JOIN tbl_area a ON p.area_id = a.id
       LEFT JOIN tbl_tenant t ON p.tenant_id = t.id
-      WHERE 1
+      LEFT JOIN tbl_properties_images pi ON pi.property_id = p.id
+
+      GROUP BY p.id
     `);
 
-    // Map image path for each record
-    const updatedProperties = properties.map(property => {
+    // Format images properly
+    const formatted = properties.map(p => {
+      const images = p.property_images
+        ? p.property_images.split(',').map(img => `${imageBaseUrl}${img}`)
+        : [];
+
       return {
-        ...property,
-        bathroom_image: property.bathroom_image
-          ? imageBaseUrl + property.bathroom_image
-          : null
+        ...p,
+        bathroom_image: p.bathroom_image ? `${imageBaseUrl}${p.bathroom_image}` : null,
+        property_images: images
       };
     });
 
-    if (updatedProperties.length > 0) {
-      res.status(200).json({ success: true, data: updatedProperties });
+    if (formatted.length > 0) {
+      res.status(200).json({ success: true, data: formatted });
     } else {
       res.status(200).json({ success: false, message: "No property records found." });
     }
+
   } catch (error) {
-    console.error("Error fetching properties with relations:", error);
+    console.error("Error fetching properties with images:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   } finally {
     con.release();
   }
 };
 //======================= End viewProperties ==============================
-
 
 //======================= Start deleteProperties ==============================
 const deleteProperties = async (req, res, next) => {  
@@ -798,6 +892,220 @@ const deleteProperties = async (req, res, next) => {
   }
 };
 //======================= End deleteProperties ==============================
+
+//======================= Start addBlog ============================
+const addBlog = async (req, res, next) => {
+  const con = await connection();
+
+  const {
+    title,
+    content
+  } = req.body;
+
+  const blog_image = req.file ? req.file.filename : null;
+
+  // ✅ Validate required fields
+  if (!title || !content || !blog_image) {
+    return res.status(400).json({ success: false, msg: 'All fields are required.' });
+  }
+
+  try {
+    const slug = slugify(title, { lower: true, strict: true });
+    const author_id = 1;
+    const category_id = 0;
+    const status = 'published';
+    const created_at = new Date();
+    const updated_at = new Date();
+
+    await con.beginTransaction();
+
+    const sql = `
+      INSERT INTO tbl_blogs (
+        title, slug, content, featured_image,
+        author_id, category_id, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      title, slug, content, blog_image,
+      author_id, category_id, status, created_at, updated_at
+    ];
+
+    await con.query(sql, values);
+    await con.commit();
+
+    res.status(200).json({ success: true, msg: 'Blog added successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error adding blog:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End addBlog ============================
+
+//======================= Start viewBlog ============================== 
+const viewBlog = async (req, res) => {
+  const con = await connection();
+
+  // Image base path for blogs
+  const blogImageBaseUrl = `${process.env.Host}/upload/blog/`;
+
+  try {
+    const [blogs] = await con.query(`
+      SELECT 
+        id, 
+        title, 
+        slug, 
+        content, 
+        featured_image, 
+        author_id, 
+        category_id, 
+        status, 
+        created_at, 
+        updated_at 
+      FROM tbl_blogs
+    `);
+
+    if (blogs.length > 0) {
+      const blogsWithImagePath = blogs.map(blog => ({
+        ...blog,
+        featured_image: blog.featured_image ? blogImageBaseUrl + blog.featured_image : null
+      }));
+
+      res.status(200).json({ success: true, data: blogsWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No blog records found." });
+    }
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewBlog ============================== 
+
+//======================= Start editBlog ============================
+const editBlog = async (req, res, next) => {
+  const con = await connection();
+  const {
+    id,
+    title,
+    content,
+    status = 'published',
+    category_id = 0,
+    author_id = 1
+  } = req.body;
+
+  const blog_image = req.file ? req.file.filename : null;
+
+  if (!id) {
+    return res.status(400).json({ success: false, msg: 'Blog ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    let fields = [];
+    let values = [];
+
+    if (title) {
+      fields.push('title = ?');
+      values.push(title);
+
+      // ➕ Generate new slug if title is changed
+      const slug = slugify(title, { lower: true, strict: true });
+      fields.push('slug = ?');
+      values.push(slug);
+    }
+
+    if (content) {
+      fields.push('content = ?');
+      values.push(content);
+    }
+
+    if (category_id !== undefined) {
+      fields.push('category_id = ?');
+      values.push(category_id);
+    }
+
+    if (author_id !== undefined) {
+      fields.push('author_id = ?');
+      values.push(author_id);
+    }
+
+    if (status) {
+      fields.push('status = ?');
+      values.push(status);
+    }
+
+    if (blog_image) {
+      fields.push('featured_image = ?');
+      values.push(blog_image);
+    }
+
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, msg: 'No fields provided for update.' });
+    }
+
+    const sql = `UPDATE tbl_blogs SET ${fields.join(', ')} WHERE id = ?`;
+    values.push(id);
+
+    const [result] = await con.query(sql, values);
+
+    if (result.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Blog not found or not updated.' });
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Blog updated successfully.' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error updating blog:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End editBlog ============================== 
+
+//======================= Start deleteBlog ============================
+const deleteBlog = async (req, res, next) => {
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_blogs WHERE id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Blog not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Blog deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error deleting blog:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deleteBlog ==============================
 
 //======================= Start User Logout ============================== 
 const logout = async (req, res, next) => {
@@ -8381,7 +8689,7 @@ const graphEarningsPost = async (req, res, next) => {
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 export { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, addUser, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant,
-  viewTenant, deleteTenant, addProperties, viewProperties, deleteProperties,
+  viewTenant, editTenant, deleteTenant, addProperties, viewProperties, deleteProperties, uploadPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, 
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
    addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,

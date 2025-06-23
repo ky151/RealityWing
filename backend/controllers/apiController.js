@@ -337,6 +337,110 @@ const getAreaList = async (req, res) => {
 };
 //======================= End getAreaList ============================== 
 
+//======================= Start getPropertiesList ============================== 
+const getPropertiesList = async (req, res) => {
+  const con = await connection();  // Assume connection() establishes DB connection
+
+  // Base URL for property images
+  const imageBaseUrl = `${process.env.Host}/upload/property/`;
+
+  try {
+    // Fetch properties
+    const [properties] = await con.query(`
+      SELECT 
+        id, 
+        owner_name, 
+        owner_contact, 
+        category_id, 
+        purpose, 
+        area_id, 
+        address, 
+        location, 
+        location_lat, 
+        location_long, 
+        number_of_rooms, 
+        square_footage, 
+        bathroom_image, 
+        floor, 
+        furnished, 
+        amenities, 
+        tenant_id, 
+        availability_date, 
+        additional_detail, 
+        price, 
+        status, 
+        created_at, 
+        updated_at 
+      FROM tbl_properties
+    `);
+
+    if (properties.length > 0) {
+      const propertiesWithImagePath = properties.map(property => ({
+        ...property,
+        bathroom_image: property.bathroom_image 
+          ? imageBaseUrl + property.bathroom_image 
+          : null
+      }));
+
+      res.status(200).json({ success: true, data: propertiesWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No properties found." });
+    }
+
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End getPropertiesList ============================== 
+
+//======================= Start getBlogList ============================== 
+const getBlogList = async (req, res) => {
+  const con = await connection();
+
+  // Base URL for featured blog images
+  const imageBaseUrl = `${process.env.Host}/upload/blogs/`;
+
+  try {
+    // Fetch blog records from the database
+    const [blogs] = await con.query(`
+      SELECT 
+        id, 
+        title, 
+        slug, 
+        content, 
+        featured_image, 
+        author_id, 
+        category_id, 
+        status, 
+        created_at, 
+        updated_at 
+      FROM tbl_blogs
+    `);
+
+    if (blogs.length > 0) {
+      const blogsWithImagePath = blogs.map(blog => ({
+        ...blog,
+        featured_image: blog.featured_image
+          ? imageBaseUrl + blog.featured_image
+          : null
+      }));
+
+      res.status(200).json({ success: true, data: blogsWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No blogs found." });
+    }
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End getBlogList ============================== 
+
 //======================= Start tandc ==============================
 const tandc = async (req, res, next) => {
   const con = await connection();
@@ -9734,7 +9838,7 @@ const fetchBookingIdList = async (req,res,next) => {
   }
 }
 
-export { userSignup, userLogin, logout, changePassword, getUserProfile, getCategoryList, getAreaList, tandc, pandp,
+export { userSignup, userLogin, logout, changePassword, getUserProfile, getCategoryList, getAreaList, getPropertiesList, getBlogList, tandc, pandp,
 
   forgotPassword, sendOTP, verifyOTP,  ownerSignup,  resetpassword,guestLogin,  profile, updateprofile,  
   deleteAccount,   faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 

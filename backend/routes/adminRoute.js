@@ -1,7 +1,7 @@
 import express from "express";
 
 import { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant, viewTenant,
-  deleteTenant, addProperties, viewProperties, deleteProperties,
+  editTenant, deleteTenant, addProperties, viewProperties, deleteProperties, uploadPropertyImages, addBlog, viewBlog, editBlog, deleteBlog,
   
   home, error404, error500,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
@@ -144,7 +144,7 @@ import { isAuthenticatedAdmin } from "../middleware/Adminauth.js";
 
 import upload from '../middleware/upload.js';
 
-import { categoryUploads, profileUpload, areaUploads, bathroomUploads, docUploads, countryUploads , fileUpload } from '../middleware/uploader.js';
+import { categoryUploads, profileUpload, areaUploads, bathroomUploads, multiplepropertyUploads, blogUploads, docUploads, countryUploads , fileUpload } from '../middleware/uploader.js';
 
 const router = express.Router();
 
@@ -169,10 +169,17 @@ router.route('/viewArea').get(isAuthenticatedAdmin,profileUpload.none(),viewArea
 router.route('/deleteArea').post(isAuthenticatedAdmin,profileUpload.none(),deleteArea)
 router.route('/addTenant').post(isAuthenticatedAdmin,profileUpload.none(),addTenant)
 router.route('/viewTenant').get(isAuthenticatedAdmin,profileUpload.none(),viewTenant)
+router.route('/editTenant').post(isAuthenticatedAdmin,profileUpload.none(),editTenant)
 router.route('/deleteTenant').post(isAuthenticatedAdmin,profileUpload.none(),deleteTenant)
 router.route('/addProperties').post(isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),addProperties)
+router.route('/uploadPropertyImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),uploadPropertyImages)
 router.route('/viewProperties').get(isAuthenticatedAdmin,profileUpload.none(),viewProperties)
 router.route('/deleteProperties').post(isAuthenticatedAdmin,profileUpload.none(),deleteProperties)
+router.route('/addBlog').post(isAuthenticatedAdmin,blogUploads.single('blog_image'),addBlog)
+router.route('/viewBlog').get(isAuthenticatedAdmin,profileUpload.none(),viewBlog)
+router.route('/editBlog').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editBlog)
+router.route('/deleteBlog').post(isAuthenticatedAdmin,profileUpload.none(),deleteBlog)
+
 
 //------------------------- Forgot Reset Password ----------------
 //router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
