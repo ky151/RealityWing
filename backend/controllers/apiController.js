@@ -253,6 +253,96 @@ const getUserProfile = async (req, res, next) => {
 };
 //======================= End getUserProfile ==============================
 
+//======================= Start updateUserProfile ==============================
+const updateUserProfile = async (req, res, next) => {
+  const con = await connection();
+
+  // Extract from body
+  const {
+    user_id,
+    name,
+    email,
+    country_code,
+    phone_number
+  } = req.body;
+
+  // Uploaded image (from multer.single)
+  const profile_image_type = req.file ? req.file.filename : null;
+
+  if (!user_id) {
+    return res.status(400).json({ success: false, msg: 'User ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Check user exists
+    const [existingUser] = await con.query(
+      'SELECT * FROM tbl_users WHERE user_id = ?',
+      [user_id]
+    );
+    if (existingUser.length === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'User not found.' });
+    }
+
+    let fields = [];
+    let values = [];
+
+    if (name) {
+      fields.push('name = ?');
+      values.push(name);
+    }
+
+    if (email) {
+      fields.push('email = ?');
+      values.push(email);
+    }
+
+    if (country_code) {
+      fields.push('country_code = ?');
+      values.push(country_code);
+    }
+
+    if (phone_number) {
+      fields.push('phone_number = ?');
+      values.push(phone_number);
+    }
+
+    if (profile_image_type) {
+      fields.push('profile_image_type = ?');
+      values.push(profile_image_type);
+    }
+
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, msg: 'No fields provided for update.' });
+    }
+
+    const updateSql = `UPDATE tbl_users SET ${fields.join(', ')} WHERE user_id = ?`;
+    values.push(user_id);
+
+    const [result] = await con.query(updateSql, values);
+
+    if (result.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'User not updated.' });
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'User profile updated successfully.' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End updateUserProfile ==============================
+
 //======================= Start getCategoryList ============================== 
 const getCategoryList = async (req, res) => {
   const con = await connection();  // Assume connection() establishes DB connection
@@ -339,9 +429,8 @@ const getAreaList = async (req, res) => {
 
 //======================= Start getPropertiesList ============================== 
 const getPropertiesList = async (req, res) => {
-  const con = await connection();  // Assume connection() establishes DB connection
+  const con = await connection();
 
-  // Base URL for property images
   const imageBaseUrl = `${process.env.Host}/upload/property/`;
 
   try {
@@ -374,18 +463,37 @@ const getPropertiesList = async (req, res) => {
       FROM tbl_properties
     `);
 
-    if (properties.length > 0) {
-      const propertiesWithImagePath = properties.map(property => ({
-        ...property,
-        bathroom_image: property.bathroom_image 
-          ? imageBaseUrl + property.bathroom_image 
-          : null
-      }));
-
-      res.status(200).json({ success: true, data: propertiesWithImagePath });
-    } else {
-      res.status(200).json({ success: false, message: "No properties found." });
+    if (properties.length === 0) {
+      return res.status(200).json({ success: false, message: "No properties found." });
     }
+
+    const propertyIds = properties.map(p => p.id);
+
+    // 🔁 Fetch related images
+    const [images] = await con.query(
+      `SELECT property_id, property_image FROM tbl_properties_images WHERE property_id IN (?)`,
+      [propertyIds]
+    );
+
+    // 🔄 Group images by property_id
+    const imagesByProperty = {};
+    images.forEach(img => {
+      if (!imagesByProperty[img.property_id]) {
+        imagesByProperty[img.property_id] = [];
+      }
+      imagesByProperty[img.property_id].push(imageBaseUrl + img.property_image);
+    });
+
+    // 🔄 Attach images to each property
+    const result = properties.map(property => ({
+      ...property,
+      bathroom_image: property.bathroom_image 
+        ? imageBaseUrl + property.bathroom_image 
+        : null,
+      property_images: imagesByProperty[property.id] || []
+    }));
+
+    res.status(200).json({ success: true, data: result });
 
   } catch (error) {
     console.error("Error fetching properties:", error);
@@ -395,6 +503,47 @@ const getPropertiesList = async (req, res) => {
   }
 };
 //======================= End getPropertiesList ============================== 
+
+//======================= Start getPropertyImages ==============================
+const getPropertyImages = async (req, res, next) => {
+  const con = await connection();
+
+  const { property_id } = req.body; // or use req.query.property_id for GET method
+  const imageBaseUrl = `${process.env.Host}/upload/property/`;
+
+  if (!property_id) {
+    return res.status(400).json({ success: false, message: 'Property ID is required.' });
+  }
+
+  try {
+    const [images] = await con.query(
+      `SELECT id, property_id, property_image, created_at 
+       FROM tbl_properties_images 
+       WHERE property_id = ?`,
+      [property_id]
+    );
+
+    if (images.length === 0) {
+      return res.status(404).json({ success: false, message: 'No images found for this property.' });
+    }
+
+    const formattedImages = images.map(img => ({
+      id: img.id,
+      property_id: img.property_id,
+      image_url: imageBaseUrl + img.property_image,
+      created_at: img.created_at
+    }));
+
+    res.status(200).json({ success: true, images: formattedImages });
+
+  } catch (error) {
+    console.error("Error fetching property images:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End getPropertyImages ==============================
 
 //======================= Start getBlogList ============================== 
 const getBlogList = async (req, res) => {
@@ -441,35 +590,6 @@ const getBlogList = async (req, res) => {
 };
 //======================= End getBlogList ============================== 
 
-//======================= Start tandc ==============================
-const tandc = async (req, res, next) => {
-  const con = await connection();
-  //const type = req.query.user_type;
-  ////console.log(type);
-  try {  
-    const [result] = await con.query('SELECT * FROM tbl_tandc');
-    if (result.length > 0) {
-      const termsContent = result[0].terms;
-
-
-        // Wrap the terms content in a container with 250% zoom level
-        const zoomedContent = `${termsContent}`;
-      
-        // Return the HTML content with zoom applied as a response
-        res.send(zoomedContent);
-     // res.send(termsContent);
-    } else { 
-      res.status(200).send('Terms and conditions not found');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Internal Server Error');
-  } finally {
-    con.release();
-  }
-};
-//======================= End tandc ============================== 
-
 //======================= Start pandp ==============================
 const pandp = async (req, res, next) => {
   const con = await connection();
@@ -502,9 +622,38 @@ const pandp = async (req, res, next) => {
 };
 //======================= End pandp ============================== 
 
+//======================= Start tandc ==============================
+const tandc = async (req, res, next) => {
+  const con = await connection();
+  //const type = req.query.user_type;
+  ////console.log(type);
+  try {  
+    const [result] = await con.query('SELECT * FROM tbl_tandc');
+    if (result.length > 0) {
+      const termsContent = result[0].terms;
+
+
+        // Wrap the terms content in a container with 250% zoom level
+        const zoomedContent = `${termsContent}`;
+      
+        // Return the HTML content with zoom applied as a response
+        res.send(zoomedContent);
+     // res.send(termsContent);
+    } else { 
+      res.status(200).send('Terms and conditions not found');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    con.release();
+  }
+};
+//======================= End tandc ============================== 
+
+
 //======================= Start updateProfile ==============================
 //======================= End updateProfile ============================== 
-
 const ownerSignup =  async(req,res,next) => {
   const con = await connection();
   try {
@@ -768,42 +917,7 @@ try {
 }
 }
 
-
-
-// const changePassword = async(req, res, next) => {
-//   const con = await connection();
-//   const userID = req.user.user_id;
-//   const oldPassword = req.body.oldpassword;
-
-//   try {
-//     await con.beginTransaction();
-//     const newPassword = hashPassword(req.body.confirmPassword);
-//     var userdata;
-//     [[userdata]]= await con.query('SELECT * FROM tbl_user WHERE user_id = ?',[userID]);
-    
-//     let isValid = comparePassword(oldPassword, userdata.password);
-
-//     ////console.log("isValid--> ",isValid)
-
-//     if (!isValid) {
-//       res.status(200).json({ result: "Incorrect Old Password" });
-//       return;
-//     }
-//     const [results] = await con.query("UPDATE tbl_user SET password = ? WHERE user_id = ?", [newPassword, userID]); 
-//     await con.commit();
-//     res.json({result :"success"});
-//   } catch (error) {
-//     await con.rollback();
-//     console.error('Error:',error);
-//     res.status(500).json({result: 'Internal Server Error'} )
-//   } finally {
-//     con.release();
-//   }
-// }
-
 //---------------------- Login /Logout API end -------------------------------
-
-
 const cancellationPolicy = async (req, res, next) => {
   const con = await connection();
   const type = req.query.user_type;
@@ -829,13 +943,6 @@ const cancellationPolicy = async (req, res, next) => {
   }
 };
 //======================   Terms & Condition  Webview ================== 
-
-
-
-//========================== UserPrivacy and policy webview ============== 
-
-
-
 
 //=======================  FAQ webview ========================= 
 const faqs = async (req, res, next) => {
@@ -9838,7 +9945,8 @@ const fetchBookingIdList = async (req,res,next) => {
   }
 }
 
-export { userSignup, userLogin, logout, changePassword, getUserProfile, getCategoryList, getAreaList, getPropertiesList, getBlogList, tandc, pandp,
+export { userSignup, userLogin, logout, changePassword, getUserProfile, updateUserProfile, getCategoryList, getAreaList, getPropertiesList, getPropertyImages, getBlogList,
+  pandp, tandc, 
 
   forgotPassword, sendOTP, verifyOTP,  ownerSignup,  resetpassword,guestLogin,  profile, updateprofile,  
   deleteAccount,   faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 

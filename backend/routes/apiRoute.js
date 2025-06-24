@@ -1,5 +1,6 @@
 import express from 'express';
-import { userSignup, userLogin, logout, changePassword, getUserProfile, getCategoryList, getAreaList, getPropertiesList, getBlogList, tandc, pandp,
+import { userSignup, userLogin, logout, changePassword, getUserProfile, updateUserProfile, getCategoryList, getAreaList, getPropertiesList, getPropertyImages, getBlogList, 
+    pandp, tandc, 
     
     sendOTP, verifyOTP ,ownerSignup,forgotPassword, resetpassword,  profile, updateprofile,  deleteAccount,    faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails, fetchBankDetails, updateBankDetails, fetchWalletDetails, fetchCurrency, currencyRate, importantData, withdrawRequest, depositAmount, withdrawHistory, dipositeHistory, transactionHistory, addRating, fetchRating, contactSupportRequest, fetchSupportComplainList, replyComplainTicket, closeComplainTicket, fetchSingleComplain, updateProfilePic, switchUserOwner, fetchMakeList, fetchFeatureList, fetchCarTypeList, guestLogin, fetchModelList, fetchvehicleSeatList, addVehicle, fetchUserVehicleList, fetchOwnerVehicleList, FetchAllData, fetchCountryList, fetchOwnerVehicleDetails, fetchUserVehicleDetails, likeDislike, fetchWishlist, addRecentViewVehicle, fetchRecentViewVehicle, addGuestRecentViewVehicle, fetchGuestRecentViewVehicle, userBooking, fetchCouponList, checkVehicleAvailability, availabilityCalender, deleteVehicle, fetchBookingDetails, fetchUserBookingList, fetchOwnerBookingList, fetchVehicleRent, vehicleSerchFilter, bookingPayment, fetchReasons, cancelBooking, acceptBooking, fetchHelpReasons, cancellationPolicy, checkInStatus, checkOutStatus, fetchUserBookingHistory, fetchOwnerBookingHistory, completedReward, fetchPromotionalPlans, addPromotionalPlan, aboutUs, fetchSlider, userSupportRequest, fetchSingleUserComplain, replyUserComplainTicket, closeUserComplainTicket, fetchUserComplainList, dateChangeStatus, dateChangeRequest, updateVehicle, countrySerchFilter, updateVehicleAvailibility, loginRecheck, fetchVehicleList, fetchEarnings, getInvoiceData, fetchUserSideOwnerVehicleList, updateDeviceToken, fetchNotification, fetchNotificationCount, deleteNotification, updateProfileRequest, applyCoupon, removeAppliedCoupon, rewardHistory, addInvoice, checkInviteRefferalCode, updateCheckOutData, UpdateCheckInData, cancelWithdrawRequest, accountRecoveryRequest, fetchBookingIdList } from '../controllers/apiController.js';
 import upload from '../middleware/upload.js';  
@@ -14,14 +15,14 @@ router.route('/userLogin').post(rateLimiter,upload.none(),userLogin)
 router.route('/logout').post(isAuthenticatedUser,upload.none(),logout)
 router.route('/changePassword').post(isAuthenticatedUser,upload.none(),changePassword)
 router.route('/getUserProfile').post(isAuthenticatedUser,upload.none(),getUserProfile)
+router.route('/updateUserProfile').post(isAuthenticatedUser,profileUpload.single('profile_image'),updateUserProfile)
 router.route('/getCategoryList').get(upload.none(),getCategoryList)
 router.route('/getAreaList').get(upload.none(),getAreaList)
 router.route('/getPropertiesList').get(upload.none(),getPropertiesList)
+router.route('/getPropertyImages').get(upload.none(),getPropertyImages)
 router.route('/getBlogList').get(upload.none(),getBlogList)
-router.route('/tandc').get(upload.none(),tandc)
 router.route('/pandp').get(upload.none(),pandp)
-
-
+router.route('/tandc').get(upload.none(),tandc)
 
 
 router.route('/forgotPassword').post(upload.none(),forgotPassword)

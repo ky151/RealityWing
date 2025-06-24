@@ -1,9 +1,9 @@
 import express from "express";
 
-import { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant, viewTenant,
-  editTenant, deleteTenant, addProperties, viewProperties, deleteProperties, uploadPropertyImages, addBlog, viewBlog, editBlog, deleteBlog,
+import { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog,
   
-  home, error404, error500,profilePost,addUser, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
+  home, error404, error500,profilePost, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
   checkemail,
   checkphonenumber,
@@ -157,24 +157,31 @@ const router = express.Router();
 
 router.route('/adminLogin').post(profileUpload.none(),adminLogin)
 router.route('/adminProfile').get(isAuthenticatedAdmin,profileUpload.none(),adminProfile)
+router.route('/updateAdminProfile').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),updateAdminProfile)
 router.route('/changePassword').get(isAuthenticatedAdmin,profileUpload.none(),changePassword)
-router.route('/addCategory').post(isAuthenticatedAdmin,categoryUploads.single('category_image'),addCategory)
-router.route('/viewCategory').get(isAuthenticatedAdmin,profileUpload.none(),viewCategory)
-router.route('/deleteCategory').post(isAuthenticatedAdmin,profileUpload.none(),deleteCategory)
+router.route('/adminDashboardData').get(isAuthenticatedAdmin,profileUpload.none(),adminDashboardData)
 router.route('/addUser').post(isAuthenticatedAdmin,profileUpload.single('profile_image'),addUser)
 router.route('/viewUser').get(isAuthenticatedAdmin,profileUpload.none(),viewUser)
+router.route('/editUser').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editUser)
 router.route('/deleteUser').post(isAuthenticatedAdmin,profileUpload.none(),deleteUser)
-router.route('/addArea').post(isAuthenticatedAdmin,areaUploads.single('area_image'),addArea)
-router.route('/viewArea').get(isAuthenticatedAdmin,profileUpload.none(),viewArea)
-router.route('/deleteArea').post(isAuthenticatedAdmin,profileUpload.none(),deleteArea)
+router.route('/addCategory').post(isAuthenticatedAdmin,categoryUploads.single('category_image'),addCategory)
+router.route('/viewCategory').get(isAuthenticatedAdmin,profileUpload.none(),viewCategory)
+router.route('/editCategory').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editCategory)
+router.route('/deleteCategory').post(isAuthenticatedAdmin,profileUpload.none(),deleteCategory)
 router.route('/addTenant').post(isAuthenticatedAdmin,profileUpload.none(),addTenant)
 router.route('/viewTenant').get(isAuthenticatedAdmin,profileUpload.none(),viewTenant)
 router.route('/editTenant').post(isAuthenticatedAdmin,profileUpload.none(),editTenant)
 router.route('/deleteTenant').post(isAuthenticatedAdmin,profileUpload.none(),deleteTenant)
+router.route('/addArea').post(isAuthenticatedAdmin,areaUploads.single('area_image'),addArea)
+router.route('/viewArea').get(isAuthenticatedAdmin,profileUpload.none(),viewArea)
+router.route('/editArea').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editArea)
+router.route('/deleteArea').post(isAuthenticatedAdmin,profileUpload.none(),deleteArea)
 router.route('/addProperties').post(isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),addProperties)
-router.route('/uploadPropertyImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),uploadPropertyImages)
 router.route('/viewProperties').get(isAuthenticatedAdmin,profileUpload.none(),viewProperties)
+router.route('/editProperties').post( isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),editProperties)
 router.route('/deleteProperties').post(isAuthenticatedAdmin,profileUpload.none(),deleteProperties)
+router.route('/uploadPropertyImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),uploadPropertyImages)
+router.route('/editPropertyImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),editPropertyImages)
 router.route('/addBlog').post(isAuthenticatedAdmin,blogUploads.single('blog_image'),addBlog)
 router.route('/viewBlog').get(isAuthenticatedAdmin,profileUpload.none(),viewBlog)
 router.route('/editBlog').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editBlog)

@@ -1,6 +1,7 @@
 import connection from "../config.js";
 import * as path from 'path';     
 import * as url from 'url';
+import * as fs from 'fs';
 import ejs from "ejs";
 import {sendTokenAdmin} from "../utils/jwtToken.js";
 import {hashPassword, comparePassword , senddocNotificationUser,sendPushNotifications,sendOTPFornewPass, encrypt,decrypt , encrypt64 ,decrypt64, sendSinglePushNotification } from '../middleware/helper.js'
@@ -96,6 +97,11 @@ const adminProfile = async (req, res, next) => {
 };
 //======================= End adminProfile ==============================
 
+//======================= Start updateAdminProfile ==============================
+const updateAdminProfile = async (req, res, next) => {
+}
+//======================= End updateAdminProfile ==============================
+
 //======================= Start changePassword ==============================
 const changePassword = async (req, res, next) => {
   const con = await connection();
@@ -143,134 +149,10 @@ const changePassword = async (req, res, next) => {
 };
 //======================= End changePassword ==============================
 
-//======================= Start addCategory ============================
-const addCategory = async (req, res, next) => {
-  const con = await connection();
-
-  const {
-    category_name,
-    description,
-    status = 1  // ✅ Default status to 1 if not provided
-  } = req.body;
-    console.log('req.file:', req.file);
-
-  const category_image = req.file.filename
-
-  console.log('req.body:', req.body);
-  // Input validation
-  if (!category_name || !description || !category_image) {
-    return res.status(400).json({ result: 'All fields are required.' });
-  }
-
-  try {
-    const slug = slugify(category_name, { lower: true, strict: true });
-    const created_at = new Date();
-    const updated_at = new Date();
-
-    await con.beginTransaction();
-
-    const sql = `INSERT INTO tbl_categories 
-      (category_name, slug, description, category_image, status, created_at, updated_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)`;
-
-    const values = [
-      category_name,
-      slug,
-      description,
-      category_image,
-      status,
-      created_at,
-      updated_at
-    ];
-
-    await con.query(sql, values);
-    await con.commit();
-
-    res.status(200).json({ result: 'success' });
-
-  } catch (error) {
-    await con.rollback();
-    console.error('Error:', error);
-    res.status(500).json({ result: 'Internal Server Error' });
-  } finally {
-    con.release();
-  }
-};
-//======================= End addCategory ==============================
-
-//======================= Start viewCategory ============================== 
-const viewCategory = async (req, res) => {
-  const con = await connection();  // Assume connection() establishes DB connection
-  
-  // Define the base URL for images
-  const profileBaseUrl = `${process.env.Host}/upload/category/`;
-  
-  try {
-    // Fetch categories from the database
-    const [categories] = await con.query(`
-      SELECT 
-        id, 
-        category_name, 
-        slug, 
-        description, 
-        category_image, 
-        status, 
-        created_at, 
-        updated_at 
-      FROM tbl_categories WHERE 1
-    `);
-
-    // If categories are found
-    if (categories.length > 0) {
-      // Add the base URL to each category's image
-      const categoriesWithImagePath = categories.map(category => ({
-        ...category,
-        category_image: category.category_image ? profileBaseUrl + category.category_image : null  // Add image path if image exists
-      }));
-
-      res.status(200).json({ success: true, data: categoriesWithImagePath });
-    } else {
-      res.status(200).json({ success: false, message: "No categories found." });
-    }
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  } finally {
-    con.release();
-  }
-};
-//======================= End viewCategory ============================== 
-
-//======================= Start deleteCategory ============================
-const deleteCategory = async (req, res, next) => {  
-  const con = await connection();
-  const { id } = req.body;
-
-  try {
-    await con.beginTransaction();
-
-    const [deleteResult] = await con.query(
-      'DELETE FROM tbl_categories WHERE id = ?',
-      [id]
-    );
-
-    if (deleteResult.affectedRows === 0) {
-      await con.rollback();
-      return res.status(404).json({ success: false, msg: 'Category not found' });
-    }
-
-    await con.commit();
-    res.json({ success: true, msg: 'Category deleted successfully!' });
-
-  } catch (error) {
-    await con.rollback();
-    console.error('Error:', error);
-    res.status(500).json({ success: false, msg: 'Internal Server Error' });
-  } finally {
-    con.release();
-  }
-};
-//======================= End deleteCategory ==============================
+//======================= Start adminDashboardData ==============================
+const adminDashboardData = async (req, res, next) => {
+}
+//======================= End adminDashboardData ==============================
 
 //======================= Start addUser ============================
 const addUser = async (req, res, next) => {
@@ -380,6 +262,11 @@ const viewUser = async (req, res) => {
 };
 //======================= End viewUser ==============================
 
+//======================= Start editUser ==============================
+const editUser = async (req, res, next) => {
+}
+//======================= End editUser ==============================
+
 //======================= Start deleteUser ============================
 const deleteUser = async (req, res, next) => {  
   const con = await connection();
@@ -411,52 +298,129 @@ const deleteUser = async (req, res, next) => {
 };
 //======================= End deleteUser ==============================
 
-//======================= Start addArea ============================
-const addArea = async (req, res, next) => {
+//======================= Start addCategory ============================
+const addCategory = async (req, res, next) => {
   const con = await connection();
 
   const {
-    name,
+    category_name,
     description,
-    lat,
-    log
+    status = 1  // ✅ Default status to 1 if not provided
   } = req.body;
+    console.log('req.file:', req.file);
 
-  // Area image from file upload
-  const area_image = req.file ? req.file.filename : null;
+  const category_image = req.file.filename
 
   console.log('req.body:', req.body);
-  console.log('req.file:', req.file);
-
-  // ✅ Input validation
-  if (!name || !description || !lat || !log || !area_image) {
-    return res.status(400).json({ success: false, msg: 'All fields are required.' });
+  // Input validation
+  if (!category_name || !description || !category_image) {
+    return res.status(400).json({ result: 'All fields are required.' });
   }
 
   try {
-    const create_date = new Date();
+    const slug = slugify(category_name, { lower: true, strict: true });
+    const created_at = new Date();
+    const updated_at = new Date();
 
     await con.beginTransaction();
 
-    const sql = `
-      INSERT INTO tbl_area (
-        name, description, image, lat, log, create_date
-      ) VALUES (?, ?, ?, ?, ?, ?)
-    `;
+    const sql = `INSERT INTO tbl_categories 
+      (category_name, slug, description, category_image, status, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
     const values = [
-      name,
+      category_name,
+      slug,
       description,
-      area_image,
-      lat,
-      log,
-      create_date
+      category_image,
+      status,
+      created_at,
+      updated_at
     ];
 
     await con.query(sql, values);
     await con.commit();
 
-    res.status(200).json({ success: true, msg: 'Area added successfully!' });
+    res.status(200).json({ result: 'success' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ result: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End addCategory ==============================
+
+//======================= Start viewCategory ============================== 
+const viewCategory = async (req, res) => {
+  const con = await connection();  // Assume connection() establishes DB connection
+  
+  // Define the base URL for images
+  const profileBaseUrl = `${process.env.Host}/upload/category/`;
+  
+  try {
+    // Fetch categories from the database
+    const [categories] = await con.query(`
+      SELECT 
+        id, 
+        category_name, 
+        slug, 
+        description, 
+        category_image, 
+        status, 
+        created_at, 
+        updated_at 
+      FROM tbl_categories WHERE 1
+    `);
+
+    // If categories are found
+    if (categories.length > 0) {
+      // Add the base URL to each category's image
+      const categoriesWithImagePath = categories.map(category => ({
+        ...category,
+        category_image: category.category_image ? profileBaseUrl + category.category_image : null  // Add image path if image exists
+      }));
+
+      res.status(200).json({ success: true, data: categoriesWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No categories found." });
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewCategory ============================== 
+
+//======================= Start editCategory ==============================
+const editCategory = async (req, res, next) => {
+}
+//======================= End editCategory ==============================
+
+//======================= Start deleteCategory ============================
+const deleteCategory = async (req, res, next) => {  
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_categories WHERE id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Category not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Category deleted successfully!' });
 
   } catch (error) {
     await con.rollback();
@@ -466,78 +430,7 @@ const addArea = async (req, res, next) => {
     con.release();
   }
 };
-//======================= End addArea ==============================
-
-//======================= Start viewArea ============================== 
-const viewArea = async (req, res) => {
-  const con = await connection();
-
-  // ✅ Update this path if area images are stored elsewhere
-  const areaImageBaseUrl = `${process.env.Host}/upload/area/`;
-
-  try {
-    // Fetch area records
-    const [areas] = await con.query(`
-      SELECT 
-        id,
-        name,
-        description,
-        image,
-        lat,
-        log,
-        create_date
-      FROM tbl_area
-    `);
-
-    if (areas.length > 0) {
-      const areasWithImagePath = areas.map(area => ({
-        ...area,
-        image: area.image ? areaImageBaseUrl + area.image : null
-      }));
-
-      res.status(200).json({ success: true, data: areasWithImagePath });
-    } else {
-      res.status(200).json({ success: false, message: "No area records found." });
-    }
-  } catch (error) {
-    console.error("Error fetching areas:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  } finally {
-    con.release();
-  }
-};
-//======================= End viewArea ============================== 
-
-//======================= Start deleteArea ============================
-const deleteArea = async (req, res, next) => {  
-  const con = await connection();
-  const { id } = req.body;
-
-  try {
-    await con.beginTransaction();
-
-    const [deleteResult] = await con.query(
-      'DELETE FROM tbl_area WHERE id = ?',
-      [id]
-    );
-
-    if (deleteResult.affectedRows === 0) {
-      await con.rollback();
-      return res.status(404).json({ success: false, msg: 'Area not found' });
-    }
-
-    await con.commit();
-    res.json({ success: true, msg: 'Area deleted successfully!' });
-
-  } catch (error) {
-    await con.rollback();
-    console.error('Error deleting area:', error);
-    res.status(500).json({ success: false, msg: 'Internal Server Error' });
-  } finally {
-    con.release();
-  }
-};
-//======================= End deleteArea ==============================
+//======================= End deleteCategory ==============================
 
 //======================= Start addTenant ============================
 const addTenant = async (req, res, next) => {
@@ -680,6 +573,139 @@ const deleteTenant = async (req, res, next) => {
 };
 //======================= End deleteTenant ==============================
 
+//======================= Start addArea ============================
+const addArea = async (req, res, next) => {
+  const con = await connection();
+
+  const {
+    name,
+    description,
+    lat,
+    log
+  } = req.body;
+
+  // Area image from file upload
+  const area_image = req.file ? req.file.filename : null;
+
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
+
+  // ✅ Input validation
+  if (!name || !description || !lat || !log || !area_image) {
+    return res.status(400).json({ success: false, msg: 'All fields are required.' });
+  }
+
+  try {
+    const create_date = new Date();
+
+    await con.beginTransaction();
+
+    const sql = `
+      INSERT INTO tbl_area (
+        name, description, image, lat, log, create_date
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      name,
+      description,
+      area_image,
+      lat,
+      log,
+      create_date
+    ];
+
+    await con.query(sql, values);
+    await con.commit();
+
+    res.status(200).json({ success: true, msg: 'Area added successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End addArea ==============================
+
+//======================= Start viewArea ============================== 
+const viewArea = async (req, res) => {
+  const con = await connection();
+
+  // ✅ Update this path if area images are stored elsewhere
+  const areaImageBaseUrl = `${process.env.Host}/upload/area/`;
+
+  try {
+    // Fetch area records
+    const [areas] = await con.query(`
+      SELECT 
+        id,
+        name,
+        description,
+        image,
+        lat,
+        log,
+        create_date
+      FROM tbl_area
+    `);
+
+    if (areas.length > 0) {
+      const areasWithImagePath = areas.map(area => ({
+        ...area,
+        image: area.image ? areaImageBaseUrl + area.image : null
+      }));
+
+      res.status(200).json({ success: true, data: areasWithImagePath });
+    } else {
+      res.status(200).json({ success: false, message: "No area records found." });
+    }
+  } catch (error) {
+    console.error("Error fetching areas:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewArea ============================== 
+
+//======================= Start editArea ==============================
+const editArea = async (req, res, next) => {
+}
+//======================= End editArea ==============================
+
+//======================= Start deleteArea ============================
+const deleteArea = async (req, res, next) => {  
+  const con = await connection();
+  const { id } = req.body;
+
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_area WHERE id = ?',
+      [id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Area not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Area deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error deleting area:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deleteArea ==============================
+
 //======================= Start addProperties ============================
 const addProperties = async (req, res) => {
   const con = await connection();
@@ -750,42 +776,6 @@ const addProperties = async (req, res) => {
   }
 };
 //======================= End addProperties ==============================
-
-//======================= Start uploadPropertyImages ============================
-const uploadPropertyImages = async (req, res) => {
-  const con = await connection();
-
-  const { property_id } = req.body;
-  const files = req.files; // array of uploaded files
-
-  if (!property_id || !files || files.length === 0) {
-    return res.status(400).json({ success: false, msg: 'Property ID and images are required.' });
-  }
-
-  try {
-    await con.beginTransaction();
-
-    const insertValues = files.map(file => [property_id, file.filename]);
-
-    const sql = `
-      INSERT INTO tbl_properties_images (property_id, property_image)
-      VALUES ?
-    `;
-
-    await con.query(sql, [insertValues]);
-
-    await con.commit();
-    res.status(200).json({ success: true, msg: 'Images uploaded successfully!' });
-
-  } catch (error) {
-    await con.rollback();
-    console.error('Error uploading property images:', error);
-    res.status(500).json({ success: false, msg: 'Internal Server Error' });
-  } finally {
-    con.release();
-  }
-};
-//======================= End uploadPropertyImages ============================
 
 //======================= Start viewProperties ==============================
 const viewProperties = async (req, res) => {
@@ -862,6 +852,104 @@ const viewProperties = async (req, res) => {
 };
 //======================= End viewProperties ==============================
 
+//======================= Start editProperties ==============================
+const editProperties = async (req, res, next) => {
+  const con = await connection();
+  const {
+    id,
+    owner_name,
+    owner_contact,
+    category_id,
+    purpose,
+    area_id,
+    address,
+    location,
+    location_lat,
+    location_long,
+    number_of_rooms,
+    square_footage,
+    floor,
+    furnished,
+    amenities,
+    tenant_id,
+    availability_date,
+    additional_detail,
+    price,
+    status
+  } = req.body;
+
+  const newImage = req.file ? req.file.filename : null;
+
+  if (!id) {
+    return res.status(400).json({ success: false, msg: 'Property ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Fetch old image if new image is uploaded
+    let oldImage = null;
+    if (newImage) {
+      const [rows] = await con.query(`SELECT bathroom_image FROM tbl_properties WHERE id = ?`, [id]);
+      if (rows.length > 0) oldImage = rows[0].bathroom_image;
+    }
+
+    // Build update query
+    const updates = [];
+    const values = [];
+
+    if (owner_name) updates.push("owner_name = ?"), values.push(owner_name);
+    if (owner_contact) updates.push("owner_contact = ?"), values.push(owner_contact);
+    if (category_id) updates.push("category_id = ?"), values.push(category_id);
+    if (purpose) updates.push("purpose = ?"), values.push(purpose);
+    if (area_id) updates.push("area_id = ?"), values.push(area_id);
+    if (address) updates.push("address = ?"), values.push(address);
+    if (location) updates.push("location = ?"), values.push(location);
+    if (location_lat) updates.push("location_lat = ?"), values.push(location_lat);
+    if (location_long) updates.push("location_long = ?"), values.push(location_long);
+    if (number_of_rooms) updates.push("number_of_rooms = ?"), values.push(number_of_rooms);
+    if (square_footage) updates.push("square_footage = ?"), values.push(square_footage);
+    if (newImage) updates.push("bathroom_image = ?"), values.push(newImage);
+    if (floor) updates.push("floor = ?"), values.push(floor);
+    if (furnished) updates.push("furnished = ?"), values.push(furnished);
+    if (amenities !== undefined) updates.push("amenities = ?"), values.push(amenities);
+    if (tenant_id) updates.push("tenant_id = ?"), values.push(tenant_id);
+    if (availability_date) updates.push("availability_date = ?"), values.push(availability_date);
+    if (additional_detail !== undefined) updates.push("additional_detail = ?"), values.push(additional_detail);
+    if (price) updates.push("price = ?"), values.push(price);
+    if (status) updates.push("status = ?"), values.push(status);
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, msg: 'No fields to update.' });
+    }
+
+    const sql = `UPDATE tbl_properties SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+    values.push(id);
+
+    await con.query(sql, values);
+    await con.commit();
+
+    // Delete old image file if a new one was uploaded
+    if (oldImage) {
+      const imagePath = path.join(__dirname, '../public/upload/property', oldImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlink(imagePath, (err) => {
+          if (err) console.error("Failed to delete old image:", err);
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, msg: 'Property updated successfully!' });
+  } catch (error) {
+    await con.rollback();
+    console.error('Error editing property:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End editProperties ==============================
+
 //======================= Start deleteProperties ==============================
 const deleteProperties = async (req, res, next) => {  
   const con = await connection();
@@ -892,6 +980,81 @@ const deleteProperties = async (req, res, next) => {
   }
 };
 //======================= End deleteProperties ==============================
+
+//======================= Start uploadPropertyImages ============================
+const uploadPropertyImages = async (req, res) => {
+  const con = await connection();
+
+  const { property_id } = req.body;
+  const files = req.files; // array of uploaded files
+
+  if (!property_id || !files || files.length === 0) {
+    return res.status(400).json({ success: false, msg: 'Property ID and images are required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const insertValues = files.map(file => [property_id, file.filename]);
+
+    const sql = `
+      INSERT INTO tbl_properties_images (property_id, property_image)
+      VALUES ?
+    `;
+
+    await con.query(sql, [insertValues]);
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Images uploaded successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error uploading property images:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End uploadPropertyImages ============================
+
+//======================= Start editPropertyImages ==============================
+const editPropertyImages = async (req, res, next) => {
+  const con = await connection();
+  const { property_id } = req.body;
+  const files = req.files;
+
+  if (!property_id) {
+    return res.status(400).json({ success: false, msg: 'Property ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Delete old images
+    await con.query(`DELETE FROM tbl_properties_images WHERE property_id = ?`, [property_id]);
+
+    // Insert new images if provided
+    if (files && files.length > 0) {
+      const insertValues = files.map(file => [property_id, file.filename]);
+      const insertSql = `
+        INSERT INTO tbl_properties_images (property_id, property_image)
+        VALUES ?
+      `;
+      await con.query(insertSql, [insertValues]);
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Property images updated successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error updating property images:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End editPropertyImages ==============================
 
 //======================= Start addBlog ============================
 const addBlog = async (req, res, next) => {
@@ -1139,7 +1302,7 @@ const logout = async (req, res, next) => {
 };
 //======================= End User Logout ============================== 
 
-
+//======================= End Not Use ============================== 
 const home = async (req, res, next) => {
   const con = await connection();
   const output = req.cookies.rental_msg || '';
@@ -8688,11 +8851,11 @@ const graphEarningsPost = async (req, res, next) => {
 
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-export { adminLogin, adminProfile, changePassword, addCategory, viewCategory, deleteCategory, addUser, viewUser, deleteUser, addArea, viewArea, deleteArea, addTenant,
-  viewTenant, editTenant, deleteTenant, addProperties, viewProperties, deleteProperties, uploadPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, 
+export { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, 
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
-   addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,
+  addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,
   deposit_to_User, withdrawal_to_User  , 
   addOwner , addUserOwner, viewOwners, changeOwnerStatus, deleteOwner , Owner_withdrawal_report, 
   deposit_to_Owner, withdrawal_to_Owner , OwnerWithdrawRequest, changeOwnerWithdrawStatus,UserWithdrawRequest,
