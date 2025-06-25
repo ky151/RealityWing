@@ -672,7 +672,70 @@ const viewArea = async (req, res) => {
 
 //======================= Start editArea ==============================
 const editArea = async (req, res, next) => {
-}
+  const con = await connection();
+
+  const {
+    id,
+    name,
+    description,
+    lat,
+    log
+  } = req.body;
+
+  const area_image = req.file ? req.file.filename : null;
+
+  if (!id) {
+    return res.status(400).json({ success: false, msg: 'Area ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Step 1: Get existing data
+    const [existing] = await con.query(`SELECT * FROM tbl_area WHERE id = ?`, [id]);
+    if (existing.length === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Area not found.' });
+    }
+
+    const oldData = existing[0];
+    const oldImage = oldData.image;
+
+    // Step 2: Determine updated values (fall back to old if not provided)
+    const updatedName = name || oldData.name;
+    const updatedDescription = description || oldData.description;
+    const updatedLat = lat || oldData.lat;
+    const updatedLog = log || oldData.log;
+    const updatedImage = area_image || oldImage;
+
+    // Step 3: Update query
+    const sql = `
+      UPDATE tbl_area
+      SET name = ?, description = ?, lat = ?, log = ?, image = ?, create_date = NOW()
+      WHERE id = ?
+    `;
+    const values = [updatedName, updatedDescription, updatedLat, updatedLog, updatedImage, id];
+    await con.query(sql, values);
+
+    // Step 4: Remove old image if replaced
+    if (area_image && oldImage && oldImage !== area_image) {
+      const imagePath = path.join(__dirname, '../public/upload/area/', oldImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Area updated successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error editing area:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
 //======================= End editArea ==============================
 
 //======================= Start deleteArea ============================
@@ -1269,6 +1332,188 @@ const deleteBlog = async (req, res, next) => {
   }
 };
 //======================= End deleteBlog ==============================
+
+//======================= Start savePolicy ==============================
+const savePolicy = async (req, res, next) => {
+  const con = await connection();
+  const { policy } = req.body;
+
+  if (!policy) {
+    return res.status(400).json({ success: false, msg: 'Policy content is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Check if a policy already exists
+    const [existing] = await con.query(`SELECT id FROM tbl_pandp LIMIT 1`);
+
+    const now = new Date();
+
+    if (existing.length > 0) {
+      // Update the existing policy
+      const policyId = existing[0].id;
+      await con.query(`UPDATE tbl_pandp SET policy = ?, updated_at = ? WHERE id = ?`, [
+        policy,
+        now,
+        policyId
+      ]);
+    } else {
+      // Insert new policy
+      await con.query(`INSERT INTO tbl_pandp (policy, created_at, updated_at) VALUES (?, ?, ?)`, [
+        policy,
+        now,
+        now
+      ]);
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Policy saved successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error saving policy:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End savePolicy ==============================
+
+//======================= Start viewPolicy ==============================
+const viewPolicy = async (req, res, next) => {
+  const con = await connection();
+
+  try {
+    const [result] = await con.query(`SELECT id, policy, created_at, updated_at FROM tbl_pandp LIMIT 1`);
+
+    if (result.length > 0) {
+      res.status(200).json({ success: true, data: result[0] });
+    } else {
+      res.status(200).json({ success: false, msg: 'No policy found.' });
+    }
+  } catch (error) {
+    console.error('Error fetching policy:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewPolicy ==============================
+
+//======================= Start deletePolicy ==============================
+const deletePolicy = async (req, res, next) => {
+  const con = await connection();
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ success: false, msg: 'Policy ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const [result] = await con.query(`DELETE FROM tbl_pandp WHERE id = ?`, [id]);
+
+    if (result.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Policy not found.' });
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Policy deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error deleting policy:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End deletePolicy ==============================
+
+//======================= Start saveTerms ==============================
+const saveTerms = async (req, res, next) => {
+  const con = await connection();
+  const { terms } = req.body;
+
+  if (!terms) {
+    return res.status(400).json({ success: false, msg: 'Terms content is required.' });
+  }
+
+  try {
+    const [existing] = await con.query(`SELECT id FROM tbl_tandc LIMIT 1`);
+
+    if (existing.length > 0) {
+      // Update existing record
+      await con.query(
+        `UPDATE tbl_tandc SET terms = ?, updated_at = NOW() WHERE id = ?`,
+        [terms, existing[0].id]
+      );
+      res.status(200).json({ success: true, msg: 'Terms updated successfully!' });
+    } else {
+      // Insert new record
+      await con.query(
+        `INSERT INTO tbl_tandc (terms, created_at, updated_at) VALUES (?, NOW(), NOW())`,
+        [terms]
+      );
+      res.status(200).json({ success: true, msg: 'Terms added successfully!' });
+    }
+  } catch (error) {
+    console.error('Error saving terms:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End saveTerms ==============================
+
+//======================= Start viewTerms ==============================
+const viewTerms = async (req, res, next) => {
+  const con = await connection();
+
+  try {
+    const [result] = await con.query(`SELECT id, terms, created_at, updated_at FROM tbl_tandc LIMIT 1`);
+
+    if (result.length > 0) {
+      res.status(200).json({ success: true, data: result[0] });
+    } else {
+      res.status(200).json({ success: false, msg: 'No terms found.' });
+    }
+  } catch (error) {
+    console.error('Error fetching terms:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End viewTerms ==============================
+
+//======================= Start deleteTerms ==============================
+const deleteTerms = async (req, res, next) => {  
+  const con = await connection();
+    const { id } = req.body;
+    try {
+        await con.beginTransaction();  
+
+          const deleteSql = `DELETE FROM tbl_tandc WHERE id = ?`;
+          await con.query(deleteSql, [id]);
+    
+          await con.commit();
+    
+          res.json({ success: true, msg: 'Terms Condition deleted successfully !!' });
+    } catch (error) {
+        await con.rollback();
+        console.error('Error:', error);
+        res.status(500).json({ success: false, msg: 'Internal Server Error' });
+    
+        // Handle error, render error message, or redirect to appropriate page
+    } finally {
+        con.release();
+    }
+  };
+//======================= End deleteTerms ==============================
 
 //======================= Start User Logout ============================== 
 const logout = async (req, res, next) => {
@@ -7375,35 +7620,6 @@ const addTermsCondition = async (req, res, next) => {
 
 
 
-
-const deleteTerms = async (req, res, next) => {  
-  const con = await connection();
-  
-  const { term_id } = req.body;
-  
-  try {
-      await con.beginTransaction();  
-   
-  
-        const deleteSql = `DELETE FROM tbl_tandc WHERE id = ?`;
-        await con.query(deleteSql, [term_id]);
-  
-        await con.commit();
-  
-        res.json({ success: true, msg: 'Terms Condition deleted successfully !!' });
-  } catch (error) {
-      await con.rollback();
-      console.error('Error:', error);
-      res.status(500).json({ success: false, msg: 'Internal Server Error' });
-  
-      // Handle error, render error message, or redirect to appropriate page
-  } finally {
-      con.release();
-  }
-  };
-
-
-
 //============================================ About Use start ======================= 
 
 
@@ -8852,7 +9068,7 @@ const graphEarningsPost = async (req, res, next) => {
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 export { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, 
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms,
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
   addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,
@@ -8878,7 +9094,7 @@ export { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDash
    checkcurrencyName ,changeCountryStatus , deleteCountry ,addAppSliderPost , deleteSlider , 
    updateCountryDetails, notificationsPost ,affiliationPost ,deleteAcode ,   referralAmountsPost,deletereferrals ,
    deposits_feePost,deleteDepositeRate, addFAQ,deleteFAQ,editFAQ ,addPrivacyPolicy,deletePrivacyPolicy,
-   deleteTerms,addTermsCondition ,deleteCancellationPolicy ,addCancellationPolicy ,owners_cancellation_policy ,users_cancellation_policy ,
+   addTermsCondition ,deleteCancellationPolicy ,addCancellationPolicy ,owners_cancellation_policy ,users_cancellation_policy ,
    QueriesPost , sendMailtoUser, AftersendemailQuriesReload ,updateUserPic,updateAdmin ,changepass , 
    addAboutus,deleteAboutus ,showNotifications,
    ForgotPassword,sendOTP,verifyOTP,resetpassword ,inquiry_contactsPost , 

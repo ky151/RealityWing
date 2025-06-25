@@ -1,7 +1,7 @@
 import express from "express";
 
 import { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms,
   
   home, error404, error500,profilePost, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
@@ -87,7 +87,6 @@ import { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDash
   addPrivacyPolicy,
   deletePrivacyPolicy,
   addTermsCondition,
-  deleteTerms,
   users_cancellation_policy,
   addCancellationPolicy,
   deleteCancellationPolicy,
@@ -174,7 +173,7 @@ router.route('/editTenant').post(isAuthenticatedAdmin,profileUpload.none(),editT
 router.route('/deleteTenant').post(isAuthenticatedAdmin,profileUpload.none(),deleteTenant)
 router.route('/addArea').post(isAuthenticatedAdmin,areaUploads.single('area_image'),addArea)
 router.route('/viewArea').get(isAuthenticatedAdmin,profileUpload.none(),viewArea)
-router.route('/editArea').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editArea)
+router.route('/editArea').post( isAuthenticatedAdmin,areaUploads.single('area_image'),editArea)
 router.route('/deleteArea').post(isAuthenticatedAdmin,profileUpload.none(),deleteArea)
 router.route('/addProperties').post(isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),addProperties)
 router.route('/viewProperties').get(isAuthenticatedAdmin,profileUpload.none(),viewProperties)
@@ -186,7 +185,12 @@ router.route('/addBlog').post(isAuthenticatedAdmin,blogUploads.single('blog_imag
 router.route('/viewBlog').get(isAuthenticatedAdmin,profileUpload.none(),viewBlog)
 router.route('/editBlog').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editBlog)
 router.route('/deleteBlog').post(isAuthenticatedAdmin,profileUpload.none(),deleteBlog)
-
+router.route('/savePolicy').post(isAuthenticatedAdmin,profileUpload.none(),savePolicy)
+router.route('/viewPolicy').get(isAuthenticatedAdmin,profileUpload.none(),viewPolicy)
+router.route('/deletePolicy').post(isAuthenticatedAdmin,profileUpload.none(),deletePolicy)
+router.route('/saveTerms').post(isAuthenticatedAdmin,profileUpload.none(),saveTerms)
+router.route('/viewTerms').get(isAuthenticatedAdmin,profileUpload.none(),viewTerms)
+router.route('/deleteTerms').post(isAuthenticatedAdmin,profileUpload.none(),deleteTerms)
 
 //------------------------- Forgot Reset Password ----------------
 //router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
