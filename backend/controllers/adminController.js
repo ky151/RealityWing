@@ -99,7 +99,60 @@ const adminProfile = async (req, res, next) => {
 
 //======================= Start updateAdminProfile ==============================
 const updateAdminProfile = async (req, res, next) => {
-}
+  const con = await connection();
+  const { id, name, email } = req.body;
+  const profile_image = req.file ? req.file.filename : null;
+
+  if (!id) {
+    return res.status(400).json({ success: false, msg: 'Admin ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Get existing admin record
+    const [adminData] = await con.query(`SELECT * FROM tbl_admin WHERE id = ?`, [id]);
+    if (adminData.length === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Admin not found.' });
+    }
+
+    const oldData = adminData[0];
+    const oldImage = oldData.profile_image;
+
+    // Prepare updated fields
+    const updatedName = name || oldData.name;
+    const updatedEmail = email || oldData.email;
+    const updatedImage = profile_image || oldImage;
+
+    // Update the admin record
+    const sql = `
+      UPDATE tbl_admin
+      SET name = ?, email = ?, profile_image = ?, updated_at = NOW()
+      WHERE id = ?
+    `;
+    const values = [updatedName, updatedEmail, updatedImage, id];
+    await con.query(sql, values);
+
+    // Delete old image file if a new image was uploaded
+    if (profile_image && oldImage && oldImage !== profile_image) {
+      const imagePath = path.join(__dirname, '../public/upload/admin/', oldImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Admin profile updated successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error updating admin profile:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
 //======================= End updateAdminProfile ==============================
 
 //======================= Start changePassword ==============================
@@ -151,7 +204,35 @@ const changePassword = async (req, res, next) => {
 
 //======================= Start adminDashboardData ==============================
 const adminDashboardData = async (req, res, next) => {
-}
+  const con = await connection();
+
+  try {
+    const [areas] = await con.query(`SELECT COUNT(*) AS total_area FROM tbl_area`);
+    const [categories] = await con.query(`SELECT COUNT(*) AS total_categories FROM tbl_categories`);
+    const [properties] = await con.query(`SELECT COUNT(*) AS total_properties FROM tbl_properties`);
+    const [tenants] = await con.query(`SELECT COUNT(*) AS total_tenants FROM tbl_tenant`);
+    const [users] = await con.query(`SELECT COUNT(*) AS total_users FROM tbl_users`);
+
+    const dashboardCounts = {
+      area_count: areas[0].total_area,
+      category_count: categories[0].total_categories,
+      property_count: properties[0].total_properties,
+      tenant_count: tenants[0].total_tenants,
+      user_count: users[0].total_users
+    };
+
+    res.status(200).json({
+      success: true,
+      data: dashboardCounts
+    });
+
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
 //======================= End adminDashboardData ==============================
 
 //======================= Start addUser ============================
@@ -264,7 +345,86 @@ const viewUser = async (req, res) => {
 
 //======================= Start editUser ==============================
 const editUser = async (req, res, next) => {
-}
+  const con = await connection();
+  const {
+    user_id,
+    name,
+    email,
+    country_code,
+    phone_number,
+    account_status
+  } = req.body;
+
+  const profile_image = req.file ? req.file.filename : null;
+
+  try {
+    await con.beginTransaction();
+
+    // Fetch old image if any
+    const [rows] = await con.query(`SELECT profile_image_type FROM tbl_users WHERE user_id = ?`, [user_id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, msg: 'User not found' });
+    }
+
+    const oldImage = rows[0].profile_image_type;
+
+    let updateQuery = `UPDATE tbl_users SET `;
+    const fields = [];
+    const values = [];
+
+    if (name) {
+      fields.push('name = ?');
+      values.push(name);
+    }
+    if (email) {
+      fields.push('email = ?');
+      values.push(email);
+    }
+    if (country_code) {
+      fields.push('country_code = ?');
+      values.push(country_code);
+    }
+    if (phone_number) {
+      fields.push('phone_number = ?');
+      values.push(phone_number);
+    }
+    if (account_status) {
+      fields.push('account_status = ?');
+      values.push(account_status);
+    }
+    if (profile_image) {
+      fields.push('profile_image_type = ?');
+      values.push(profile_image);
+    }
+
+    // Always update timestamp
+    fields.push('updated_at = NOW()');
+
+    updateQuery += fields.join(', ') + ' WHERE user_id = ?';
+    values.push(user_id);
+
+    await con.query(updateQuery, values);
+
+    // Delete old image file if replaced
+    if (profile_image && oldImage && oldImage !== profile_image) {
+      const oldImagePath = path.join(__dirname, '..', 'public', 'upload', 'user', oldImage);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'User updated successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error editing user:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
 //======================= End editUser ==============================
 
 //======================= Start deleteUser ============================
@@ -398,7 +558,90 @@ const viewCategory = async (req, res) => {
 
 //======================= Start editCategory ==============================
 const editCategory = async (req, res, next) => {
-}
+  const con = await connection();
+  const {
+    id,
+    category_name,
+    description,
+    status
+  } = req.body;
+
+  const category_image = req.file ? req.file.filename : null;
+
+  if (!id) {
+    return res.status(400).json({ success: false, msg: 'Category ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Fetch old image to possibly delete later
+    const [rows] = await con.query(`SELECT category_image FROM tbl_categories WHERE id = ?`, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, msg: 'Category not found' });
+    }
+
+    const oldImage = rows[0].category_image;
+
+    // Generate slug if category_name is provided
+    const slug = category_name ? slugify(category_name, { lower: true, strict: true }) : null;
+
+    // Prepare dynamic update query
+    let updateQuery = 'UPDATE tbl_categories SET ';
+    const updateFields = [];
+    const values = [];
+
+    if (category_name) {
+      updateFields.push('category_name = ?');
+      values.push(category_name);
+    }
+
+    if (slug) {
+      updateFields.push('slug = ?');
+      values.push(slug);
+    }
+
+    if (description) {
+      updateFields.push('description = ?');
+      values.push(description);
+    }
+
+    if (typeof status !== 'undefined') {
+      updateFields.push('status = ?');
+      values.push(status);
+    }
+
+    if (category_image) {
+      updateFields.push('category_image = ?');
+      values.push(category_image);
+    }
+
+    updateFields.push('updated_at = NOW()');
+    updateQuery += updateFields.join(', ') + ' WHERE id = ?';
+    values.push(id);
+
+    await con.query(updateQuery, values);
+
+    // Delete old image if new one uploaded
+    if (category_image && oldImage && oldImage !== category_image) {
+      const oldImagePath = path.join(__dirname, '..', 'public', 'upload', 'category', oldImage);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Category updated successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error editing category:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
 //======================= End editCategory ==============================
 
 //======================= Start deleteCategory ============================
