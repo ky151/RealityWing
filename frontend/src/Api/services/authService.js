@@ -11,7 +11,7 @@ export const userSignup = async (formData) => {
 
 
 export const userLogin = async (formData, token) => {
-    const response = await axiosInstance.post('/login', formData, {
+    const response = await axiosInstance.post('/userLogin', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Cookie': `token=${token}`, // Set the token in the Cookie header
@@ -33,5 +33,29 @@ export const userLogout = async (userId, token) => {
     },
   });
 
+  return response.data;
+};
+
+// Get user profile
+export const getUserProfile = async (token) => {
+  const response = await axiosInstance.post('/getUserProfile', {}, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Cookie': `token=${token}`,
+    },
+  });
+  return response.data;
+};
+
+// Forgot Password
+export const forgotPassword = async (newPassword, confirmPassword) => {
+  const formData = new FormData();
+  formData.append('newPassword', newPassword);
+  formData.append('confirmPassword', confirmPassword);
+  const response = await axiosInstance.post('/forgotPassword', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };

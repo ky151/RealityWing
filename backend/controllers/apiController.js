@@ -651,6 +651,17 @@ const tandc = async (req, res, next) => {
 };
 //======================= End tandc ============================== 
 
+//======================= Start tandc ==============================
+const sendPropertyRequest = async (req, res, next) => {
+  
+};
+//======================= End tandc ============================== 
+
+//======================= Start tandc ==============================
+const viewResidentialProject = async (req, res, next) => {
+  
+};
+//======================= End tandc ============================== 
 
 //======================= Start updateProfile ==============================
 //======================= End updateProfile ============================== 
@@ -9946,7 +9957,7 @@ const fetchBookingIdList = async (req,res,next) => {
 }
 
 export { userSignup, userLogin, logout, changePassword, getUserProfile, updateUserProfile, getCategoryList, getAreaList, getPropertiesList, getPropertyImages, getBlogList,
-  pandp, tandc, 
+  pandp, tandc, sendPropertyRequest, viewResidentialProject,
 
   forgotPassword, sendOTP, verifyOTP,  ownerSignup,  resetpassword,guestLogin,  profile, updateprofile,  
   deleteAccount,   faqs, addUserDocument, addCard, fetchCard, updateCard, deleteCard, userVarifyStatus, addBankDetails,fetchBankDetails , 

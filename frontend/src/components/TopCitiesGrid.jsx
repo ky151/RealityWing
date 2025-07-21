@@ -3,10 +3,6 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { FaChevronRight } from "react-icons/fa";
-import icon1 from "../assets/delhi.jpeg";
-import icon2 from "../assets/agra.jpeg";
-import icon4 from "../assets/jaipur-india.jpg";
-import icon5 from "../assets/mumbai.jpg";
 import { FaChevronLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -20,10 +16,9 @@ const chunkArray = (arr, size) => {
 };
 
 const CityCard = ({ city, navigate }) => (
-  <div 
-    className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-100 rounded-lg transition-colors h-[120px]" 
-    onClick={() => navigate(`/category/Vijay Nagar`)}
-  >
+  <div
+    className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-100 rounded-lg transition-colors h-[120px]"
+    onClick={() => navigate(`/area/${city.id}`)}  >
     <img
       src={city.image}
       alt={city.name}
@@ -39,16 +34,16 @@ const CityCard = ({ city, navigate }) => (
 const TopCities = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
-const areas = useSelector((state) => state.area.areas || []);
+  const areas = useSelector((state) => state.area.areas || []);
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchAreas());
-    
+
   }, [dispatch]);
-  useEffect(()=>{
-console.log(areas ,"areas on use")
-  },[areas])
+  useEffect(() => {
+    console.log(areas, "areas on use")
+  }, [areas])
   // const indoreAreas = useMemo(() => [
   //   { name: "Vijay Nagar", properties: "5,200+ Properties", image: icon1 },
   //   { name: "Palasia", properties: "3,800+ Properties", image: icon2 },

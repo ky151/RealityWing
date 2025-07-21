@@ -1736,27 +1736,63 @@ const viewTerms = async (req, res, next) => {
 //======================= Start deleteTerms ==============================
 const deleteTerms = async (req, res, next) => {  
   const con = await connection();
-    const { id } = req.body;
-    try {
-        await con.beginTransaction();  
+  const { id } = req.body;
+  try {
+      await con.beginTransaction();  
 
-          const deleteSql = `DELETE FROM tbl_tandc WHERE id = ?`;
-          await con.query(deleteSql, [id]);
-    
-          await con.commit();
-    
-          res.json({ success: true, msg: 'Terms Condition deleted successfully !!' });
-    } catch (error) {
-        await con.rollback();
-        console.error('Error:', error);
-        res.status(500).json({ success: false, msg: 'Internal Server Error' });
-    
-        // Handle error, render error message, or redirect to appropriate page
-    } finally {
-        con.release();
-    }
-  };
+        const deleteSql = `DELETE FROM tbl_tandc WHERE id = ?`;
+        await con.query(deleteSql, [id]);
+  
+        await con.commit();
+  
+        res.json({ success: true, msg: 'Terms Condition deleted successfully !!' });
+  } catch (error) {
+      await con.rollback();
+      console.error('Error:', error);
+      res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  
+      // Handle error, render error message, or redirect to appropriate page
+  } finally {
+      con.release();
+  }
+};
 //======================= End deleteTerms ==============================
+
+//======================= Start propertyRequest ==============================
+const propertyRequest = async (req, res, next) => {  
+
+};
+//======================= End propertyRequest ==============================
+
+//======================= Start addResidentialProject ==============================
+const addResidentialProject = async (req, res, next) => {  
+
+};
+//======================= End addResidentialProject ==============================
+
+//======================= Start viewResidentialProject ==============================
+const viewResidentialProject = async (req, res, next) => {  
+
+};
+//======================= End viewResidentialProject ==============================
+
+//======================= Start editResidentialProject ==============================
+const editResidentialProject = async (req, res, next) => {  
+
+};
+//======================= End editResidentialProject ==============================
+
+//======================= Start deleteResidentialProject ==============================
+const deleteResidentialProject = async (req, res, next) => {  
+
+};
+//======================= End deleteResidentialProject ==============================
+
+//======================= Start uploadResidentialImages ==============================
+const uploadResidentialImages = async (req, res, next) => {  
+
+};
+//======================= End uploadResidentialImages ==============================
 
 //======================= Start User Logout ============================== 
 const logout = async (req, res, next) => {
@@ -9311,7 +9347,8 @@ const graphEarningsPost = async (req, res, next) => {
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 export { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, propertyRequest,
+    addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages,
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
   addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,

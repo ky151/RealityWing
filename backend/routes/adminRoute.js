@@ -1,7 +1,8 @@
 import express from "express";
 
 import { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, propertyRequest,
+    addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages,
   
   home, error404, error500,profilePost, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
@@ -191,6 +192,13 @@ router.route('/deletePolicy').post(isAuthenticatedAdmin,profileUpload.none(),del
 router.route('/saveTerms').post(isAuthenticatedAdmin,profileUpload.none(),saveTerms)
 router.route('/viewTerms').get(isAuthenticatedAdmin,profileUpload.none(),viewTerms)
 router.route('/deleteTerms').post(isAuthenticatedAdmin,profileUpload.none(),deleteTerms)
+router.route('/propertyRequest').post(isAuthenticatedAdmin,profileUpload.none(),propertyRequest)
+router.route('/addResidentialProject').post(isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),addResidentialProject)
+router.route('/viewResidentialProject').get(isAuthenticatedAdmin,profileUpload.none(),viewResidentialProject)
+router.route('/editResidentialProject').post( isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),editResidentialProject)
+router.route('/deleteResidentialProject').post(isAuthenticatedAdmin,profileUpload.none(),deleteResidentialProject)
+router.route('/uploadResidentialImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),uploadResidentialImages)
+
 
 //------------------------- Forgot Reset Password ----------------
 //router.route('/profile').post(isAuthenticatedAdmin,updateAdmin) 
