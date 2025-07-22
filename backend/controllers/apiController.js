@@ -653,13 +653,126 @@ const tandc = async (req, res, next) => {
 
 //======================= Start tandc ==============================
 const sendPropertyRequest = async (req, res, next) => {
-  
+  const con = await connection();
+  const { property_id, user_id } = req.body;
+
+  // ✅ Input validation
+  if (!property_id || !user_id) {
+    return res.status(400).json({
+      success: false,
+      msg: 'Both property_id and user_id are required.'
+    });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Optional: Check if the same request already exists and is still pending
+    const [existing] = await con.query(
+      `SELECT request_id FROM tbl_property_request WHERE property_id = ? AND user_id = ? AND status = '0'`,
+      [property_id, user_id]
+    );
+
+    if (existing.length > 0) {
+      await con.rollback();
+      return res.status(409).json({
+        success: false,
+        msg: 'A pending request already exists for this property.'
+      });
+    }
+
+    // Insert new request
+    await con.query(
+      `INSERT INTO tbl_property_request (property_id, user_id) VALUES (?, ?)`,
+      [property_id, user_id]
+    );
+
+    await con.commit();
+    res.status(200).json({
+      success: true,
+      msg: 'Request sent successfully.'
+    });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error sending property request:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
 };
 //======================= End tandc ============================== 
 
 //======================= Start tandc ==============================
 const viewResidentialProject = async (req, res, next) => {
-  
+  const con = await connection();
+  const imageBaseUrl = `${process.env.Host}/upload/residential/`;
+
+  try {
+    const [projects] = await con.query(`
+      SELECT 
+        rp.residential_id,
+        rp.owner_name,
+        rp.owner_email,
+        rp.owner_contact,
+        rp.owner_image,
+        rp.company_name,
+        rp.rera_number,
+        
+        rp.area_id,
+        a.name AS area_name,
+
+        rp.category_id,
+        c.category_name,
+
+        rp.residential_name,
+        rp.residential_address,
+        rp.city,
+        rp.state,
+        rp.pincode,
+        rp.total_area,
+        rp.total_plots,
+        rp.facilities,
+        rp.description,
+        rp.status,
+        rp.created_at,
+        rp.updated_at,
+
+        GROUP_CONCAT(ri.residential_image) AS residential_images
+
+      FROM tbl_residential_projects rp
+      LEFT JOIN tbl_area a ON rp.area_id = a.id
+      LEFT JOIN tbl_categories c ON rp.category_id = c.id
+      LEFT JOIN tbl_residential_images ri ON ri.residential_id = rp.residential_id
+
+      GROUP BY rp.residential_id
+      ORDER BY rp.residential_id DESC
+    `);
+
+    const formatted = projects.map(project => {
+      const imageArray = project.residential_images
+        ? project.residential_images.split(',').map(img => `${imageBaseUrl}${img}`)
+        : [];
+
+      return {
+        ...project,
+        owner_image: project.owner_image ? `${imageBaseUrl}${project.owner_image}` : null,
+        residential_images: imageArray
+      };
+    });
+
+    if (formatted.length > 0) {
+      res.status(200).json({ success: true, data: formatted });
+    } else {
+      res.status(200).json({ success: false, message: "No residential project records found." });
+    }
+
+  } catch (error) {
+    console.error("Error fetching residential projects:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
 };
 //======================= End tandc ============================== 
 

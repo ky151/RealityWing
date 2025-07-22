@@ -1,7 +1,7 @@
 import express from "express";
 
 import { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, propertyRequest,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, viewPropertyRequest,
     addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages,
   
   home, error404, error500,profilePost, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
@@ -144,7 +144,8 @@ import { isAuthenticatedAdmin } from "../middleware/Adminauth.js";
 
 import upload from '../middleware/upload.js';
 
-import { categoryUploads, profileUpload, areaUploads, bathroomUploads, multiplepropertyUploads, blogUploads, docUploads, countryUploads , fileUpload } from '../middleware/uploader.js';
+import { categoryUploads, profileUpload, areaUploads, bathroomUploads, multiplepropertyUploads, blogUploads, ownerUploads, multipleresidentialUploads,
+  docUploads, countryUploads , fileUpload } from '../middleware/uploader.js';
 
 const router = express.Router();
 
@@ -192,12 +193,12 @@ router.route('/deletePolicy').post(isAuthenticatedAdmin,profileUpload.none(),del
 router.route('/saveTerms').post(isAuthenticatedAdmin,profileUpload.none(),saveTerms)
 router.route('/viewTerms').get(isAuthenticatedAdmin,profileUpload.none(),viewTerms)
 router.route('/deleteTerms').post(isAuthenticatedAdmin,profileUpload.none(),deleteTerms)
-router.route('/propertyRequest').post(isAuthenticatedAdmin,profileUpload.none(),propertyRequest)
-router.route('/addResidentialProject').post(isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),addResidentialProject)
+router.route('/viewPropertyRequest').get(isAuthenticatedAdmin,profileUpload.none(),viewPropertyRequest)
+router.route('/addResidentialProject').post(isAuthenticatedAdmin,ownerUploads.single('owner_image'),addResidentialProject)
 router.route('/viewResidentialProject').get(isAuthenticatedAdmin,profileUpload.none(),viewResidentialProject)
-router.route('/editResidentialProject').post( isAuthenticatedAdmin,bathroomUploads.single('bathroom_image'),editResidentialProject)
+router.route('/editResidentialProject').post( isAuthenticatedAdmin,ownerUploads.single('owner_image'),editResidentialProject)
 router.route('/deleteResidentialProject').post(isAuthenticatedAdmin,profileUpload.none(),deleteResidentialProject)
-router.route('/uploadResidentialImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),uploadResidentialImages)
+router.route('/uploadResidentialImages').post(isAuthenticatedAdmin,multipleresidentialUploads.array('residential_images', 10),uploadResidentialImages)
 
 
 //------------------------- Forgot Reset Password ----------------
@@ -217,134 +218,56 @@ router.route('/changepass').post( isAuthenticatedAdmin,profileUpload.single('pro
 
 //--------------- Admin section End -------------------------------
 
-
 router.route('/error404').get(error404);
-
 router.route('/error500').get(error500)
-
-
-
-
-
 
 //------------------- User Section ------------------
 
-
-
 router.route('/addUser').get(isAuthenticatedAdmin,addUser)
-
 router.route('/addUser').post(docUploads.fields([{ name: 'front_image', maxCount: 1 }, { name: 'back_image', maxCount: 1 } ]),isAuthenticatedAdmin,addUserPost)
-
-
 router.route('/updateUser').post( isAuthenticatedAdmin,profileUpload.single('profile_image'),updateUser)
-
-
 router.route('/adduserAmount').get(isAuthenticatedAdmin,adduserAmount)
-
 router.route('/adduserAmount').post(isAuthenticatedAdmin,adduserAmountPost)
-
-
-
-
-
-
-
-
-
-
 router.route('/checkemail').post(isAuthenticatedAdmin, checkemail)
-
 router.route('/checkphonenumber').post(isAuthenticatedAdmin, checkphonenumber)
-
-
 router.route('/viewUsers').get(isAuthenticatedAdmin,viewUsers)
-
 router.route('/changeUserStatus').post(isAuthenticatedAdmin,changeUserStatus)
-
 router.route('/deleteUser').post(isAuthenticatedAdmin,deleteUser)
-
 router.route('/user_withdrawal_report').get(isAuthenticatedAdmin,user_withdrawal_report)
 router.route('/user_document_management').get(isAuthenticatedAdmin,user_document_management)
-
-
 router.route('/changeLicenseStatus').post(isAuthenticatedAdmin,changeLicenseStatus)
-
 router.route('/changeOwnerDocStatus').post(isAuthenticatedAdmin,changeOwnerDocStatus)
-
-
 router.route('/senddocNotification').post(isAuthenticatedAdmin,senddocNotification)
-
-
-
-
 router.route('/deposit_to_User').post(isAuthenticatedAdmin,deposit_to_User)
-
 router.route('/withdrawal_to_User').post(isAuthenticatedAdmin,withdrawal_to_User)
 
-
-
-
-  //------------------- Owner  Section ------------------
-
-
+//------------------- Owner  Section ------------------
 
 router.route('/addOwner').get(isAuthenticatedAdmin,addOwner)
-
-
 router.route('/addOwner').post(isAuthenticatedAdmin,docUploads.array('front_image'),addUserOwner)
-
-
-
 router.route('/viewOwners').get(isAuthenticatedAdmin,viewOwners)
-
 router.route('/updateOwner').post( isAuthenticatedAdmin,profileUpload.single('profile_image'),updateOwner)
-
-
-
 router.route('/changeOwnerStatus').post(isAuthenticatedAdmin,changeOwnerStatus)
-
 router.route('/deleteOwner').post(isAuthenticatedAdmin,deleteOwner)
-
 router.route('/senddocNotificationOwner').post(isAuthenticatedAdmin,senddocNotificationOwner)
-
-
-
-
 router.route('/Owner_withdrawal_report').get(isAuthenticatedAdmin,Owner_withdrawal_report)
 router.route('/Owner_document_management').get(isAuthenticatedAdmin,Owner_document_management)
-
 router.route('/OwnerWithdrawRequest').get(isAuthenticatedAdmin,OwnerWithdrawRequest)
 router.route('/changeOwnerWithdrawStatus').post(isAuthenticatedAdmin,changeOwnerWithdrawStatus)
-
 router.route('/UserWithdrawRequest').get(isAuthenticatedAdmin,UserWithdrawRequest)
 router.route('/changeUserWithdrawStatus').post(isAuthenticatedAdmin,changeUserWithdrawStatus)
-
 router.route('/deposit_to_Owner').post(isAuthenticatedAdmin,deposit_to_Owner)
-
 router.route('/withdrawal_to_Owner').post(isAuthenticatedAdmin,withdrawal_to_Owner)
-
-
 router.route('/addownerAmount').get(isAuthenticatedAdmin,addownerAmount)
-
 router.route('/addownerAmount').post(isAuthenticatedAdmin,addownerAmountPost)
 
-
-
-  //------------------- Booking  Section ------------------  
+//------------------- Booking  Section ------------------  
 
 router.route('/pending_bookings').get(isAuthenticatedAdmin,pending_bookings)
-
 router.route('/confirmed_bookings').get(isAuthenticatedAdmin,confirmed_bookings)
-
 router.route('/ongoing_bookings').get(isAuthenticatedAdmin,ongoing_bookings)
-
 router.route('/completed_bookings').get(isAuthenticatedAdmin,completed_bookings)
-
 router.route('/cancelled_bookings').get(isAuthenticatedAdmin,cancelled_bookings)
-
-
-
-
 
   //------------------- Vehicle Make models  Section ------------------  
 router.route('/vehicleCategory').get(isAuthenticatedAdmin,vehicleCategory)

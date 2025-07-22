@@ -72,7 +72,7 @@ const multiplepropertyStorage = multer.diskStorage({
   }
 });
 
-const blogUploadsStorage = multer.diskStorage({  
+const blogStorage = multer.diskStorage({  
   destination: function (req, file, cb) {
     cb(null, 'public/upload/blog'); // Destination folder for uploaded images
   },
@@ -84,6 +84,37 @@ const blogUploadsStorage = multer.diskStorage({
     cb(null, imageName);
   }
 });
+
+
+const ownerStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/upload/residential'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("Owner pic uploaded");
+    const img = file.originalname;
+    const timestamp = Date.now();
+    const imageName = `residential_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
+
+const multipleresidentialStorage = multer.diskStorage({  
+  destination: function (req, file, cb) {
+    cb(null, 'public/upload/residential'); // Destination folder for uploaded images
+  },
+  filename: function (req, file, cb) {
+    console.log("Residential pic uploaded");
+    const img = file.originalname;
+    const timestamp = Date.now();
+    const imageName = `residential_${timestamp}${img}`;
+    cb(null, imageName);
+  }
+});
+
+
+
+
 
 
 // Define storage for uploaded images
@@ -348,7 +379,9 @@ const profileUpload = multer({ storage: profileStorage });
 const areaUploads  = multer({ storage: areaStorage });
 const bathroomUploads  = multer({ storage: bathroomStorage });
 const multiplepropertyUploads  = multer({ storage: multiplepropertyStorage });
-const blogUploads  = multer({ storage: blogUploadsStorage });
+const blogUploads  = multer({ storage: blogStorage });
+const ownerUploads  = multer({ storage: ownerStorage });
+const multipleresidentialUploads  = multer({ storage: multipleresidentialStorage });
 
 
 
@@ -378,7 +411,7 @@ const countryUploads  = multer({ storage: countryStorage });
 
 const userThreadUploads  = multer({ storage: userThreadStorage });
 
-export { categoryUploads, profileUpload, areaUploads, bathroomUploads, multiplepropertyUploads, blogUploads, 
+export { categoryUploads, profileUpload, areaUploads, bathroomUploads, multiplepropertyUploads, blogUploads, ownerUploads, multipleresidentialUploads,
   
   imageUpload, fileUpload , vehicleUploads,  docUploads ,  postUploads , 
   thumbnailUploads , folderimgUploads , boardimgUploads ,chatUploads , groupchatUploads , 

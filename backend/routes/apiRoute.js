@@ -24,7 +24,7 @@ router.route('/getBlogList').get(upload.none(),getBlogList)
 router.route('/pandp').get(upload.none(),pandp)
 router.route('/tandc').get(upload.none(),tandc)
 router.route('/sendPropertyRequest').post(isAuthenticatedUser,upload.none(),sendPropertyRequest)
-router.route('/viewResidentialProject').post(isAuthenticatedUser,upload.none(),viewResidentialProject)
+router.route('/viewResidentialProject').get(upload.none(),viewResidentialProject)
 
 router.route('/forgotPassword').post(upload.none(),forgotPassword)
 router.route('/sendOTP').post(upload.none(),sendOTP)

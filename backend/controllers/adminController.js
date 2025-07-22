@@ -1759,38 +1759,396 @@ const deleteTerms = async (req, res, next) => {
 //======================= End deleteTerms ==============================
 
 //======================= Start propertyRequest ==============================
-const propertyRequest = async (req, res, next) => {  
+const viewPropertyRequest = async (req, res, next) => {
+  const con = await connection();
 
+  try {
+    const [requests] = await con.query(`
+      SELECT 
+        pr.request_id,
+        pr.status AS request_status,
+        pr.created_at AS request_created_at,
+        pr.updated_at AS request_updated_at,
+
+        -- Property Details
+        p.id AS property_id,
+        p.owner_name,
+        p.owner_contact,
+        p.category_id,
+        p.purpose,
+        p.area_id,
+        p.address,
+        p.location,
+        p.location_lat,
+        p.location_long,
+        p.number_of_rooms,
+        p.square_footage,
+        p.bathroom_image,
+        p.floor,
+        p.furnished,
+        p.amenities,
+        p.tenant_id,
+        p.availability_date,
+        p.additional_detail,
+        p.price,
+        p.status AS property_status,
+        p.created_at AS property_created_at,
+        p.updated_at AS property_updated_at,
+
+        -- User Details
+        u.user_id,
+        u.name,
+        u.email,
+        u.password,
+        u.country_code,
+        u.phone_number,
+        u.profile_image_type,
+        u.device_key,
+        u.auth_token,
+        u.account_status,
+        u.role,
+        u.registration_date,
+        u.registration_time,
+        u.created_at AS user_created_at,
+        u.updated_at AS user_updated_at
+
+      FROM tbl_property_request pr
+      LEFT JOIN tbl_properties p ON pr.property_id = p.id
+      LEFT JOIN tbl_users u ON pr.user_id = u.user_id
+      ORDER BY pr.request_id DESC
+    `);
+
+    if (requests.length > 0) {
+      res.status(200).json({ success: true, data: requests });
+    } else {
+      res.status(200).json({ success: false, message: "No property requests found." });
+    }
+
+  } catch (error) {
+    console.error("Error fetching property requests:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
 };
 //======================= End propertyRequest ==============================
 
 //======================= Start addResidentialProject ==============================
-const addResidentialProject = async (req, res, next) => {  
+const addResidentialProject = async (req, res) => {
+  const con = await connection();
 
+  const {
+    owner_name,
+    owner_email,
+    owner_contact,
+    company_name,
+    rera_number,
+    area_id,
+    category_id,
+    residential_name,
+    residential_address,
+    city,
+    state,
+    pincode,
+    total_area,
+    total_plots,
+    facilities,
+    status,
+    description
+  } = req.body;
+
+  const owner_image = req.file ? req.file.filename : null;
+
+  // ✅ Required field validation
+  if (!owner_name || !residential_name) {
+    return res.status(400).json({
+      success: false,
+      msg: 'Required fields: owner_name and residential_name must be provided.'
+    });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const sql = `
+      INSERT INTO tbl_residential_projects (
+        owner_name, owner_email, owner_contact, owner_image,
+        company_name, rera_number,
+        area_id, category_id,
+        residential_name, residential_address, city, state, pincode,
+        total_area, total_plots,
+        facilities, status, description
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      owner_name,
+      owner_email || null,
+      owner_contact || null,
+      owner_image,
+      company_name || null,
+      rera_number || null,
+      area_id || null,
+      category_id || null,
+      residential_name,
+      residential_address || null,
+      city || null,
+      state || null,
+      pincode || null,
+      total_area || null,
+      total_plots || null,
+      facilities || null,
+      status ||  'active',
+      description || null
+    ];
+
+    const [result] = await con.query(sql, values);
+    await con.commit();
+
+    res.status(200).json({
+      success: true,
+      msg: 'Residential project added successfully!',
+      residential_id: result.insertId
+    });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error adding residential project:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
 };
 //======================= End addResidentialProject ==============================
 
 //======================= Start viewResidentialProject ==============================
-const viewResidentialProject = async (req, res, next) => {  
+const viewResidentialProject = async (req, res) => {
+  const con = await connection();
+  const imageBaseUrl = `${process.env.Host}/upload/residential/`;
 
+  try {
+    const [projects] = await con.query(`
+      SELECT 
+        rp.residential_id,
+        rp.owner_name,
+        rp.owner_email,
+        rp.owner_contact,
+        rp.owner_image,
+        rp.company_name,
+        rp.rera_number,
+        rp.area_id,
+        a.name AS area_name,
+        rp.category_id,
+        c.category_name,
+        rp.residential_name,
+        rp.residential_address,
+        rp.city,
+        rp.state,
+        rp.pincode,
+        rp.total_area,
+        rp.total_plots,
+        rp.facilities,
+        rp.description,
+        rp.created_at,
+        rp.updated_at,
+        GROUP_CONCAT(ri.residential_image) AS residential_images
+
+      FROM tbl_residential_projects rp
+      LEFT JOIN tbl_area a ON rp.area_id = a.id
+      LEFT JOIN tbl_categories c ON rp.category_id = c.id
+      LEFT JOIN tbl_residential_images ri ON rp.residential_id = ri.residential_id
+
+      GROUP BY rp.residential_id
+      ORDER BY rp.residential_id DESC
+    `);
+
+    const formatted = projects.map(project => {
+      const images = project.residential_images
+        ? project.residential_images.split(',').map(img => `${imageBaseUrl}${img}`)
+        : [];
+
+      return {
+        ...project,
+        owner_image: project.owner_image ? `${imageBaseUrl}${project.owner_image}` : null,
+        residential_images: images
+      };
+    });
+
+    if (formatted.length > 0) {
+      res.status(200).json({ success: true, data: formatted });
+    } else {
+      res.status(200).json({ success: false, message: "No residential project records found." });
+    }
+
+  } catch (error) {
+    console.error("Error fetching residential projects:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  } finally {
+    con.release();
+  }
 };
 //======================= End viewResidentialProject ==============================
 
 //======================= Start editResidentialProject ==============================
-const editResidentialProject = async (req, res, next) => {  
+const editResidentialProject = async (req, res, next) => {
+  const con = await connection();
+  const {
+    residential_id,
+    owner_name,
+    owner_email,
+    owner_contact,
+    company_name,
+    rera_number,
+    area_id,
+    category_id,
+    residential_name,
+    residential_address,
+    city,
+    state,
+    pincode,
+    total_area,
+    total_plots,
+    facilities,
+    description,
+    status // <-- added here
+  } = req.body;
 
+  const newImage = req.file ? req.file.filename : null;
+
+  if (!residential_id) {
+    return res.status(400).json({ success: false, msg: 'Residential ID is required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    // Get old image if new one uploaded
+    let oldImage = null;
+    if (newImage) {
+      const [rows] = await con.query(
+        'SELECT owner_image FROM tbl_residential_projects WHERE residential_id = ?',
+        [residential_id]
+      );
+      if (rows.length > 0) oldImage = rows[0].owner_image;
+    }
+
+    const updates = [];
+    const values = [];
+
+    if (owner_name) updates.push("owner_name = ?"), values.push(owner_name);
+    if (owner_email) updates.push("owner_email = ?"), values.push(owner_email);
+    if (owner_contact) updates.push("owner_contact = ?"), values.push(owner_contact);
+    if (company_name) updates.push("company_name = ?"), values.push(company_name);
+    if (rera_number) updates.push("rera_number = ?"), values.push(rera_number);
+    if (area_id) updates.push("area_id = ?"), values.push(area_id);
+    if (category_id) updates.push("category_id = ?"), values.push(category_id);
+    if (residential_name) updates.push("residential_name = ?"), values.push(residential_name);
+    if (residential_address) updates.push("residential_address = ?"), values.push(residential_address);
+    if (city) updates.push("city = ?"), values.push(city);
+    if (state) updates.push("state = ?"), values.push(state);
+    if (pincode) updates.push("pincode = ?"), values.push(pincode);
+    if (total_area) updates.push("total_area = ?"), values.push(total_area);
+    if (total_plots) updates.push("total_plots = ?"), values.push(total_plots);
+    if (facilities !== undefined) updates.push("facilities = ?"), values.push(facilities);
+    if (description !== undefined) updates.push("description = ?"), values.push(description);
+    if (status) updates.push("status = ?"), values.push(status); // <--- added here
+    if (newImage) updates.push("owner_image = ?"), values.push(newImage);
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, msg: 'No fields to update.' });
+    }
+
+    const sql = `UPDATE tbl_residential_projects SET ${updates.join(', ')}, updated_at = NOW() WHERE residential_id = ?`;
+    values.push(residential_id);
+
+    await con.query(sql, values);
+    await con.commit();
+
+    // Delete old image file
+    if (oldImage) {
+      const imagePath = path.join(__dirname, '../public/upload/property', oldImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlink(imagePath, (err) => {
+          if (err) console.error('Failed to delete old image:', err);
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, msg: 'Residential project updated successfully!' });
+  } catch (error) {
+    await con.rollback();
+    console.error('Error editing residential project:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
 };
 //======================= End editResidentialProject ==============================
 
 //======================= Start deleteResidentialProject ==============================
-const deleteResidentialProject = async (req, res, next) => {  
+const deleteResidentialProject = async (req, res, next) => {
+  const con = await connection();
+  const { residential_id } = req.body;
 
+  try {
+    await con.beginTransaction();
+
+    const [deleteResult] = await con.query(
+      'DELETE FROM tbl_residential_projects WHERE residential_id = ?',
+      [residential_id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Residential project not found' });
+    }
+
+    await con.commit();
+    res.json({ success: true, msg: 'Residential project deleted successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error deleting residential project:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
 };
 //======================= End deleteResidentialProject ==============================
 
 //======================= Start uploadResidentialImages ==============================
-const uploadResidentialImages = async (req, res, next) => {  
+const uploadResidentialImages = async (req, res, next) => {
+  const con = await connection();
 
+  const { residential_id } = req.body;
+  const files = req.files; // array of uploaded images
+
+  if (!residential_id || !files || files.length === 0) {
+    return res.status(400).json({ success: false, msg: 'Residential ID and images are required.' });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const insertValues = files.map(file => [residential_id, file.filename]);
+
+    const sql = `
+      INSERT INTO tbl_residential_images (residential_id, residential_image)
+      VALUES ?
+    `;
+
+    await con.query(sql, [insertValues]);
+
+    await con.commit();
+    res.status(200).json({ success: true, msg: 'Residential project images uploaded successfully!' });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error uploading residential images:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
 };
 //======================= End uploadResidentialImages ==============================
 
@@ -9347,7 +9705,7 @@ const graphEarningsPost = async (req, res, next) => {
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 export { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, propertyRequest,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, viewPropertyRequest,
     addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages,
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
