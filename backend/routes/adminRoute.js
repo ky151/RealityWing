@@ -1,8 +1,7 @@
 import express from "express";
 
 import { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, viewPropertyRequest,
-    addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, updatePropertyOrder, updatePropertyImagesOrder, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, viewPropertyRequest, addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages,
   
   home, error404, error500,profilePost, addUserPost, viewUsers, changeUserStatus, user_withdrawal_report, deposit_to_User, withdrawal_to_User, addOwner, addUserOwner, changeOwnerStatus, deleteOwner, Owner_withdrawal_report, deposit_to_Owner, withdrawal_to_Owner, viewOwners, pending_bookings, confirmed_bookings, ongoing_bookings, completed_bookings, cancelled_bookings, index ,
   user_document_management,Owner_document_management,vehicleCategory,vehicleModel,vehicleTypes,vehicleFeatures,viewVehicles,
@@ -183,6 +182,8 @@ router.route('/editProperties').post( isAuthenticatedAdmin,bathroomUploads.singl
 router.route('/deleteProperties').post(isAuthenticatedAdmin,profileUpload.none(),deleteProperties)
 router.route('/uploadPropertyImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),uploadPropertyImages)
 router.route('/editPropertyImages').post(isAuthenticatedAdmin,multiplepropertyUploads.array('property_images', 10),editPropertyImages)
+router.route('/updatePropertyOrder').post(isAuthenticatedAdmin,profileUpload.none(),updatePropertyOrder)
+router.route('/updatePropertyImagesOrder').post(isAuthenticatedAdmin,profileUpload.none(),updatePropertyImagesOrder)
 router.route('/addBlog').post(isAuthenticatedAdmin,blogUploads.single('blog_image'),addBlog)
 router.route('/viewBlog').get(isAuthenticatedAdmin,profileUpload.none(),viewBlog)
 router.route('/editBlog').post( isAuthenticatedAdmin,blogUploads.single('blog_image'),editBlog)

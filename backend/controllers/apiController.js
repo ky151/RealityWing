@@ -458,9 +458,13 @@ const getPropertiesList = async (req, res) => {
         additional_detail, 
         price, 
         status, 
+        order_position,       -- ✅ Include order_position
         created_at, 
         updated_at 
       FROM tbl_properties
+      ORDER BY 
+        CASE WHEN order_position IS NULL THEN 1 ELSE 0 END,
+        order_position ASC
     `);
 
     if (properties.length === 0) {
@@ -517,9 +521,14 @@ const getPropertyImages = async (req, res, next) => {
 
   try {
     const [images] = await con.query(
-      `SELECT id, property_id, property_image, created_at 
+      `SELECT id, property_id, property_image, 
+       order_position,    -- ✅ Include order_position
+       created_at 
        FROM tbl_properties_images 
-       WHERE property_id = ?`,
+       WHERE property_id = ?
+       ORDER BY 
+         CASE WHEN order_position IS NULL THEN 1 ELSE 0 END,
+         order_position ASC`,
       [property_id]
     );
 
@@ -531,6 +540,7 @@ const getPropertyImages = async (req, res, next) => {
       id: img.id,
       property_id: img.property_id,
       image_url: imageBaseUrl + img.property_image,
+      order_position: img.order_position,   // ✅ Send order_position in response
       created_at: img.created_at
     }));
 
@@ -550,7 +560,7 @@ const getBlogList = async (req, res) => {
   const con = await connection();
 
   // Base URL for featured blog images
-  const imageBaseUrl = `${process.env.Host}/upload/blogs/`;
+  const imageBaseUrl = `${process.env.Host}/upload/blog/`;
 
   try {
     // Fetch blog records from the database

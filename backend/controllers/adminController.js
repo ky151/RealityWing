@@ -1034,7 +1034,8 @@ const addProperties = async (req, res) => {
     tenant_id,
     availability_date,
     additional_detail,
-    price
+    price,
+    order_position // ✅ Optional in request
   } = req.body;
 
   const bathroom_image = req.file ? req.file.filename : null;
@@ -1056,15 +1057,16 @@ const addProperties = async (req, res) => {
         owner_name, owner_contact, category_id, purpose, area_id, address,
         location, location_lat, location_long, number_of_rooms, square_footage,
         bathroom_image, floor, furnished, amenities, tenant_id, availability_date,
-        additional_detail, price
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        additional_detail, price, order_position
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       owner_name, owner_contact, category_id, purpose, area_id, address,
       location, location_lat, location_long, number_of_rooms, square_footage,
       bathroom_image, floor, furnished, amenities || null, tenant_id,
-      availability_date, additional_detail || null, price
+      availability_date, additional_detail || null, price,
+      order_position || null  // ✅ If not provided, NULL 
     ];
 
     //await con.query(sql, values);
@@ -1115,6 +1117,7 @@ const viewProperties = async (req, res) => {
         p.additional_detail, 
         p.price, 
         p.status, 
+        p.order_position,
         p.created_at, 
         p.updated_at,
 
@@ -1128,6 +1131,9 @@ const viewProperties = async (req, res) => {
       LEFT JOIN tbl_properties_images pi ON pi.property_id = p.id
 
       GROUP BY p.id
+      ORDER BY 
+        CASE WHEN p.order_position IS NULL THEN 1 ELSE 0 END,  -- NULL values last
+        p.order_position ASC;
     `);
 
     // Format images properly
@@ -1361,6 +1367,113 @@ const editPropertyImages = async (req, res, next) => {
   }
 };
 //======================= End editPropertyImages ==============================
+
+//======================= Start Property Order Set ==============================
+const updatePropertyOrder = async (req, res, next) => {
+  const con = await connection();
+  const { property_id, order_position } = req.body;
+
+  // ✅ Validation
+  if (!property_id || order_position === undefined) {
+    return res.status(400).json({
+      success: false,
+      msg: 'property_id and order_position are required.'
+    });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const now = new Date();
+
+    // ✅ Check if property exists
+    const [existing] = await con.query(
+      `SELECT id FROM tbl_properties WHERE id = ?`,
+      [property_id]
+    );
+
+    if (existing.length === 0) {
+      await con.rollback();
+      return res.status(404).json({ success: false, msg: 'Property not found.' });
+    }
+
+    // ✅ Update order_position
+    await con.query(
+      `UPDATE tbl_properties SET order_position = ?, updated_at = ? WHERE id = ?`,
+      [order_position, now, property_id]
+    );
+
+    await con.commit();
+
+    res.status(200).json({
+      success: true,
+      msg: 'Property order updated successfully!'
+    });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error updating property order:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End Property Order Set ==============================
+
+//======================= End PropertyImages Order Set ==============================
+const updatePropertyImagesOrder = async (req, res, next) => {
+  const con = await connection();
+  const { image_id, property_id, order_position } = req.body;
+
+  // ✅ Validation
+  if (!image_id || !property_id || order_position === undefined) {
+    return res.status(400).json({
+      success: false,
+      msg: 'image_id, property_id and order_position are required.'
+    });
+  }
+
+  try {
+    await con.beginTransaction();
+
+    const now = new Date();
+
+    // ✅ Check if image exists for that property
+    const [existing] = await con.query(
+      `SELECT id FROM tbl_properties_images WHERE id = ? AND property_id = ?`,
+      [image_id, property_id]
+    );
+
+    if (existing.length === 0) {
+      await con.rollback();
+      return res.status(404).json({
+        success: false,
+        msg: 'Image not found for this property.'
+      });
+    }
+
+    // ✅ Update order_position
+    await con.query(
+      `UPDATE tbl_properties_images SET order_position = ?, created_at = ? WHERE id = ? AND property_id = ?`,
+      [order_position, now, image_id, property_id]
+    );
+
+    await con.commit();
+
+    res.status(200).json({
+      success: true,
+      msg: 'Property image order updated successfully!'
+    });
+
+  } catch (error) {
+    await con.rollback();
+    console.error('Error updating property image order:', error);
+    res.status(500).json({ success: false, msg: 'Internal Server Error' });
+  } finally {
+    con.release();
+  }
+};
+//======================= End PropertyImages Order Set ==============================
 
 //======================= Start addBlog ============================
 const addBlog = async (req, res, next) => {
@@ -9705,8 +9818,7 @@ const graphEarningsPost = async (req, res, next) => {
 //================================== END CONTROLLER +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 export { adminLogin, adminProfile, updateAdminProfile, changePassword, adminDashboardData, addUser, viewUser, editUser, deleteUser, addCategory, viewCategory, editCategory,
-    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, viewPropertyRequest,
-    addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages,
+    deleteCategory, addTenant, viewTenant, editTenant, deleteTenant, addArea, viewArea, editArea, deleteArea,  addProperties, viewProperties, editProperties, deleteProperties, uploadPropertyImages, editPropertyImages, updatePropertyOrder, updatePropertyImagesOrder, addBlog, viewBlog, editBlog, deleteBlog, savePolicy, viewPolicy, deletePolicy, saveTerms, viewTerms, deleteTerms, viewPropertyRequest, addResidentialProject, viewResidentialProject, deleteResidentialProject, editResidentialProject, uploadResidentialImages, 
   
   home, fetchChartData,fetchRideChartData, login , logout ,error404 , error500,  index,profilePost,
   addUserPost ,checkemail,checkphonenumber,viewUsers ,changeUserStatus, user_withdrawal_report,
